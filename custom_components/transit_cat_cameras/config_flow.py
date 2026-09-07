@@ -50,9 +50,13 @@ async def _get_inventory_or_error(hass) -> tuple[list[TransitCatCamera] | None, 
     try:
         cameras = await async_fetch_camera_inventory(hass, session)
         try:
-            cameras.extend(await async_fetch_threecat_camera_inventory(session))
+            threecat_cameras = await async_fetch_threecat_camera_inventory(session)
+            cameras.extend(threecat_cameras)
+            _LOGGER.debug("Catálogo 3Cat añadido: %d cámaras", len(threecat_cameras))
         except Exception:  # noqa: BLE001 - 3Cat no debe impedir las cámaras SCT
-            _LOGGER.warning("No se pudo añadir el catálogo de cámaras de 3Cat", exc_info=True)
+            _LOGGER.warning(
+                "No se pudo añadir el catálogo de cámaras de 3Cat", exc_info=True
+            )
     except TimeoutError:
         return None, "timeout"
     except InventoryTooLargeError:

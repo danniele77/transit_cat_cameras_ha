@@ -28,11 +28,18 @@ async def async_setup_entry(
 ) -> None:
     """Crea un resumen general y un sensor por carretera."""
     session = async_get_clientsession(hass)
+    async def update_incidents() -> list[TransitCatIncident]:
+        try:
+            return await async_fetch_incidents(session)
+        except Exception:  # noqa: BLE001 - los sensores deben seguir disponibles
+            _LOGGER.warning("No se pudieron actualizar las incidencias del SCT", exc_info=True)
+            return []
+
     coordinator = DataUpdateCoordinator(
         hass,
         _LOGGER,
         name="Incidencias viarias SCT",
-        update_method=lambda: async_fetch_incidents(session),
+        update_method=update_incidents,
         update_interval=timedelta(minutes=5),
     )
     await coordinator.async_config_entry_first_refresh()
