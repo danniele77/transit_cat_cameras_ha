@@ -34,9 +34,11 @@ Las cuatro se pueden añadir; simplemente no selecciones las de Andorra si
 solo quieres cobertura catalana.
 
 También se incorporan las imágenes públicas del catálogo de cámaras de
-[3Cat](https://www.3cat.cat/3catinfo/el-temps/cameres/), incluidas las
-ubicaciones de estaciones de esquí. Aparecen en el selector como
-**3Cat · Webcams** y **3Cat · Esquí**.
+[3Cat](https://www.3cat.cat/3catinfo/el-temps/cameres/). El catálogo incluye
+webcams urbanas, costeras y de montaña, entre ellas varias estaciones de
+esquí. Aparecen en el selector como **3Cat · Webcams** y **3Cat · Esquí**.
+Las imágenes se leen directamente desde el dominio público de estáticos de
+3Cat (`statics.3cat.cat`); no se descarga ni se reproduce ningún vídeo.
 
 ## Instalación
 
@@ -59,13 +61,16 @@ puntos → **Repositorios personalizados**, añade
 2. Reinicia Home Assistant.
 3. Ve a **Ajustes → Dispositivos y servicios → Añadir integración** y busca
    "Càmeres de trànsit" (o "SCT").
-4. Elige la carretera, una categoría de 3Cat o, después, marca las cámaras concretas que quieras
-   añadir.
+4. Elige una carretera del SCT, **3Cat · Webcams** o **3Cat · Esquí** y marca
+   las cámaras concretas que quieras añadir.
 
 Puedes repetir el proceso (o usar el botón **Configurar** de la entrada ya
 creada → *Añadir cámaras*) para ir añadiendo más carreteras o más cámaras
-con el tiempo. Cada carretera crea su propia entrada, agrupando sus
-cámaras bajo un mismo dispositivo en Home Assistant.
+con el tiempo. Para incorporar las cámaras 3Cat en una instalación existente,
+no hace falta eliminar la entrada: abre **Configurar → Añadir cámaras** y
+selecciona una de las categorías 3Cat. Cada carretera o categoría crea su
+propia entrada, agrupando sus cámaras bajo un mismo dispositivo en Home
+Assistant.
 
 ## Cómo protege al servidor de origen
 
@@ -82,8 +87,8 @@ Igual que la integración de referencia de la DGT:
    empiece por la firma binaria de un formato de imagen real (evita
    guardar en caché una página de error HTML servida con código 200).
 5. **Allowlist de dominios**: solo se descargan imágenes de los cuatro
-   dominios listados arriba, aunque la URL venga del propio XML remoto
-   (protección SSRF).
+   proveedores SCT y del dominio estático de 3Cat, aunque la URL venga de un
+   feed remoto (protección SSRF).
 
 ### Diferencia deliberada respecto a la integración de la DGT
 
@@ -108,13 +113,11 @@ python3 -m unittest discover tests
 
 Prueba el parseo del XML (`_parse_camera_inventory`) contra un fixture
 construido a partir de una descarga real del feed, cubriendo las cuatro
-fuentes (SCT, Terrassa, IMI, Andorra), la deduplicación de entradas
-repetidas que trae el propio feed, y la limpieza de un `\r` suelto que
-aparece dentro de `<cite:link>` en las cámaras de Terrassa. También prueba
-`is_allowed_image_url` contra los cuatro dominios reales y contra intentos
-de bypass del allowlist. Los tests corren sin tener Home Assistant
-instalado (mismo truco de stubs que usa el repo de referencia en
-`tests/_load.py`).
+fuentes (SCT, Terrassa, IMI, Andorra), y prueba el parseo HTML del catálogo
+de 3Cat y la clasificación de sus cámaras de esquí. También se valida
+`is_allowed_image_url` contra los proveedores reales y contra intentos de
+bypass del allowlist. Los tests corren sin tener Home Assistant instalado
+(mismo truco de stubs que usa el repo de referencia en `tests/_load.py`).
 
 ## Estructura
 
