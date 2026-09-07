@@ -32,7 +32,15 @@
         "title": "Cámaras de tráfico (SCT)",
         "menu_options": {
           "add_cameras": "Añadir cámaras",
+          "add_incident_panels": "Añadir paneles de incidencias",
           "remove_cameras": "Quitar cámaras"
+        }
+      },
+      "add_incident_panels": {
+        "title": "Añadir paneles de incidencias",
+        "description": "Selecciona las carreteras que quieres controlar con sensores de incidencias del SCT.",
+        "data": {
+          "roads": "Carreteras"
         }
       },
       "road": {
@@ -61,6 +69,8 @@
       "no_cameras_selected": "Selecciona al menos una cámara.",
       "cannot_remove_all_cameras": "No puedes quitar todas las cámaras desde aquí. Si quieres quitarlas todas, elimina esta entrada completa desde Dispositivos y servicios.",
       "inventory_too_large": "El listado del SCT es más grande de lo esperado y se ha descartado por seguridad."
+      ,"incidents_unavailable": "No se pudieron cargar las incidencias del SCT."
+      ,"no_incident_roads": "No hay carreteras con incidencias activas."
     },
     "abort": {
       "no_cameras_to_remove": "Esta entrada no tiene ninguna cámara guardada."

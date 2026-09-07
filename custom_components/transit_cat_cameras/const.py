@@ -69,6 +69,7 @@ ALLOWED_IMAGE_DOMAINS = (
 # Clave usada dentro de config_entry.data para guardar la lista de cámaras
 # que el usuario ha seleccionado.
 CONF_CAMERAS = "cameras"
+CONF_INCIDENT_ROADS = "incident_roads"
 
 # ---------------------------------------------------------------------------
 # Control de frecuencia de peticiones

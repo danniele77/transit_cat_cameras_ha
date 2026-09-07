@@ -52,6 +52,11 @@ actualizan cada cinco minutos:
 - **Incidencias `<carretera>`**: un sensor por carretera con el detalle de
    sus incidencias, incluyendo km, sentido, municipio, causa, nivel y destino.
 
+Para elegir qué carreteras quieres seguir, abre la integración y pulsa
+**Configurar → Añadir paneles de incidencias**. Esto crea un sensor tipo panel
+por cada carretera seleccionada, mientras que **Añadir cámaras** queda
+reservado para las instantáneas de SCT y 3Cat.
+
 Estos sensores permiten crear automatizaciones o tarjetas para una ruta
 concreta, por ejemplo `B-10`, `C-32` o `AP-7`. La fuente publica incidencias
 estructuradas, no la posición GPS ni el texto de paneles variables; por eso

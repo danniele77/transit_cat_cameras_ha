@@ -32,7 +32,15 @@
         "title": "Càmeres de trànsit (SCT)",
         "menu_options": {
           "add_cameras": "Afegir càmeres",
+          "add_incident_panels": "Afegir panells d'incidències",
           "remove_cameras": "Treure càmeres"
+        }
+      },
+      "add_incident_panels": {
+        "title": "Afegir panells d'incidències",
+        "description": "Selecciona les carreteres que vols controlar amb sensors d'incidències del SCT.",
+        "data": {
+          "roads": "Carreteres"
         }
       },
       "road": {
@@ -61,6 +69,8 @@
       "no_cameras_selected": "Selecciona com a mínim una càmera.",
       "cannot_remove_all_cameras": "No pots treure totes les càmeres des d'aquí. Si vols treure-les totes, elimina aquesta entrada sencera des de Dispositius i serveis.",
       "inventory_too_large": "El llistat del SCT és més gran del que s'esperava i s'ha descartat per seguretat."
+      ,"incidents_unavailable": "No s'han pogut carregar les incidències del SCT."
+      ,"no_incident_roads": "No hi ha carreteres amb incidències actives."
     },
     "abort": {
       "no_cameras_to_remove": "Aquesta entrada no té cap càmera guardada."

@@ -37,9 +37,10 @@ from .api import (
     InventoryTooLargeError,
     TransitCatCamera,
     async_fetch_camera_inventory,
+    async_fetch_incidents,
     async_fetch_threecat_camera_inventory,
 )
-from .const import CONF_CAMERAS, DOMAIN
+from .const import CONF_CAMERAS, CONF_INCIDENT_ROADS, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -101,6 +102,20 @@ def _cameras_schema(candidates: list[TransitCatCamera]) -> vol.Schema:
             vol.Required("camera_ids"): SelectSelector(
                 SelectSelectorConfig(
                     options=options,
+                    multiple=True,
+                    mode=SelectSelectorMode.LIST,
+                )
+            )
+        }
+    )
+
+
+def _incident_roads_schema(roads: list[str]) -> vol.Schema:
+    return vol.Schema(
+        {
+            vol.Required("roads"): SelectSelector(
+                SelectSelectorConfig(
+                    options=[SelectOptionDict(value=road, label=road) for road in roads],
                     multiple=True,
                     mode=SelectSelectorMode.LIST,
                 )
@@ -232,7 +247,49 @@ class TransitCatCamerasOptionsFlow(config_entries.OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
         return self.async_show_menu(
-            step_id="init", menu_options=["add_cameras", "remove_cameras"]
+            step_id="init",
+            menu_options=["add_cameras", "add_incident_panels", "remove_cameras"],
+        )
+
+    async def async_step_add_incident_panels(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Selecciona las carreteras que tendrán sensores tipo panel."""
+        if user_input is not None:
+            selected_roads = set(user_input["roads"])
+            existing_roads = set(
+                self.config_entry.data.get(CONF_INCIDENT_ROADS, [])
+            )
+            self.hass.config_entries.async_update_entry(
+                self.config_entry,
+                data={
+                    **self.config_entry.data,
+                    CONF_INCIDENT_ROADS: sorted(existing_roads | selected_roads),
+                },
+            )
+            return self.async_create_entry(title="", data={})
+
+        session = async_get_clientsession(self.hass)
+        try:
+            incidents = await async_fetch_incidents(session)
+        except Exception:  # noqa: BLE001 - mostrar un error útil en el flujo
+            _LOGGER.exception("No se pudieron cargar las incidencias del SCT")
+            return self.async_show_form(
+                step_id="add_incident_panels",
+                data_schema=vol.Schema({}),
+                errors={"base": "incidents_unavailable"},
+            )
+
+        roads = sorted({incident.road for incident in incidents})
+        if not roads:
+            return self.async_show_form(
+                step_id="add_incident_panels",
+                data_schema=vol.Schema({}),
+                errors={"base": "no_incident_roads"},
+            )
+        return self.async_show_form(
+            step_id="add_incident_panels",
+            data_schema=_incident_roads_schema(roads),
         )
 
     async def async_step_add_cameras(

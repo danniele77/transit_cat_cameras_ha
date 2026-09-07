@@ -16,7 +16,7 @@ from homeassistant.helpers.update_coordinator import (
 from homeassistant.components.sensor import SensorEntity
 
 from .api import TransitCatIncident, async_fetch_incidents
-from .const import DOMAIN
+from .const import CONF_INCIDENT_ROADS, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,7 +44,8 @@ async def async_setup_entry(
     )
     await coordinator.async_config_entry_first_refresh()
 
-    roads = sorted({incident.road for incident in coordinator.data})
+    selected_roads = set(entry.data.get(CONF_INCIDENT_ROADS, []))
+    roads = sorted({incident.road for incident in coordinator.data} & selected_roads)
     async_add_entities(
         [TransitCatIncidentSummarySensor(coordinator, entry)]
         + [TransitCatRoadSensor(coordinator, entry, road) for road in roads]

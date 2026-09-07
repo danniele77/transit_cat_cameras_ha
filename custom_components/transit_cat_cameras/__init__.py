@@ -25,7 +25,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .api import clear_inventory_cache
-from .const import CONF_CAMERAS, DOMAIN
+from .const import CONF_CAMERAS, CONF_INCIDENT_ROADS, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,7 +42,11 @@ def _huella_entry(entry: ConfigEntry) -> tuple[str, ...]:
     flujo de opciones dispara dos avisos seguidos al añadir cámaras).
     """
     dispositivos = entry.data.get(CONF_CAMERAS, [])
-    return tuple(sorted(d.get("device_id", "") for d in dispositivos))
+    incident_roads = entry.data.get(CONF_INCIDENT_ROADS, [])
+    return tuple(
+        sorted(d.get("device_id", "") for d in dispositivos)
+        + [f"incident:{road}" for road in incident_roads]
+    )
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
