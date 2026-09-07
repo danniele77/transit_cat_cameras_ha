@@ -90,6 +90,21 @@ def is_allowed_image_url(url: str) -> bool:
     )
 
 
+def image_url_variants(url: str) -> tuple[str, ...]:
+    """Devuelve variantes conocidas para una URL de cámara del SCT.
+
+    El inventario XML publica algunas cámaras SCT con extensión ``.gif``,
+    mientras que la web oficial las enlaza como ``.jpg``. El servidor puede
+    fallar con una de las dos formas, así que se prueba primero la variante
+    JPG y después la URL original.
+    """
+    if "mct.gencat.cat" not in (urlparse(url).hostname or "").lower():
+        return (url,)
+    if "sctidcam=" not in url.lower() or not url.lower().endswith(".gif"):
+        return (url,)
+    return (url[:-4] + ".jpg", url)
+
+
 def _slugify(value: str) -> str:
     value = _SLUG_RE.sub("_", value.lower()).strip("_")
     return value or "cam"

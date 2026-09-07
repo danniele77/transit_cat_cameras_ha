@@ -67,6 +67,21 @@ class TestParseCameraInventory(unittest.TestCase):
 
 
 class TestIsAllowedImageUrl(unittest.TestCase):
+    def test_genera_jpg_como_fallback_para_sct(self) -> None:
+        self.assertEqual(
+            api.image_url_variants(
+                "http://mct.gencat.cat/mct2bo/RenderService?sctidcam=nc87.gif"
+            ),
+            (
+                "http://mct.gencat.cat/mct2bo/RenderService?sctidcam=nc87.jpg",
+                "http://mct.gencat.cat/mct2bo/RenderService?sctidcam=nc87.gif",
+            ),
+        )
+
+    def test_no_cambia_urls_de_otros_proveedores(self) -> None:
+        url = "https://emap.terrassa.cat/it_terrassa/cam01.jpeg?a=1"
+        self.assertEqual(api.image_url_variants(url), (url,))
+
     def test_acepta_los_cuatro_dominios_del_feed_con_http_o_https(self) -> None:
         urls = [
             "http://mct.gencat.cat/mct2bo/RenderService?sctidcam=nc87.gif",

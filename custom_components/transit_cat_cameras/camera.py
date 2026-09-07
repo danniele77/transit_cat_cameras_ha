@@ -31,7 +31,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .api import is_allowed_image_url
+from .api import image_url_variants, is_allowed_image_url
 from .const import (
     BACKOFF_INITIAL_SECONDS,
     BACKOFF_MAX_SECONDS,
@@ -85,6 +85,7 @@ class TransitCatTrafficCamera(Camera):
         self._entry = entry
         self._camera_data = camera_data
         self._image_url: str = camera_data["image_url"]
+        self._image_urls = image_url_variants(self._image_url)
 
         device_id = camera_data["device_id"]
         self._attr_unique_id = f"{entry.entry_id}_{device_id}"
@@ -161,7 +162,7 @@ class TransitCatTrafficCamera(Camera):
             if ahora < self._reintentar_a_partir_de:
                 return self._cached_image
 
-            if not is_allowed_image_url(self._image_url):
+            if not all(is_allowed_image_url(url) for url in self._image_urls):
                 _LOGGER.error(
                     "Cámara %s: la URL guardada (%s) no es de un dominio "
                     "permitido; no se descargará. Vuelve a añadir la cámara.",
@@ -204,75 +205,92 @@ class TransitCatTrafficCamera(Camera):
 
         try:
             async with asyncio.timeout(HTTP_TIMEOUT_SECONDS):
-                async with session.get(self._image_url, headers=headers) as response:
-                    if response.status == 304:
-                        _LOGGER.debug(
-                            "Cámara %s: sin cambios (304)", self._attr_name
-                        )
-                        return _SIN_CAMBIOS
-
-                    response.raise_for_status()
-
-                    content_type = (response.content_type or "").lower()
-                    if content_type.startswith(REJECTED_CONTENT_TYPE_PREFIXES):
-                        _LOGGER.warning(
-                            "Cámara %s: el servidor devolvió '%s' en lugar de "
-                            "una imagen; se descarta la respuesta",
-                            self._attr_name,
-                            content_type,
-                        )
-                        self._registrar_fallo()
-                        return None
-
-                    declarado = response.content_length
-                    if declarado is not None and declarado > MAX_IMAGE_BYTES:
-                        _LOGGER.warning(
-                            "Cámara %s: imagen demasiado grande (%d bytes), "
-                            "se descarta",
-                            self._attr_name,
-                            declarado,
-                        )
-                        self._registrar_fallo()
-                        return None
-
-                    trozos: list[bytes] = []
-                    total = 0
-                    async for trozo in response.content.iter_chunked(64 * 1024):
-                        total += len(trozo)
-                        if total > MAX_IMAGE_BYTES:
-                            _LOGGER.warning(
-                                "Cámara %s: la descarga superó %d bytes, se aborta",
+                for image_url in self._image_urls:
+                    try:
+                        response = await session.get(image_url, headers=headers)
+                    except Exception:
+                        if image_url == self._image_urls[-1]:
+                            raise
+                        continue
+                    async with response:
+                        if response.status >= 400 and image_url != self._image_urls[-1]:
+                            _LOGGER.debug(
+                                "Cámara %s: %s devolvió HTTP %s; se probará la "
+                                "siguiente variante",
                                 self._attr_name,
-                                MAX_IMAGE_BYTES,
+                                image_url,
+                                response.status,
+                            )
+                            continue
+                        if response.status == 304:
+                            _LOGGER.debug(
+                                "Cámara %s: sin cambios (304)", self._attr_name
+                            )
+                            return _SIN_CAMBIOS
+
+                        response.raise_for_status()
+
+                        content_type = (response.content_type or "").lower()
+                        if content_type.startswith(REJECTED_CONTENT_TYPE_PREFIXES):
+                            _LOGGER.warning(
+                                "Cámara %s: el servidor devolvió '%s' en lugar de "
+                                "una imagen; se descarta la respuesta",
+                                self._attr_name,
+                                content_type,
                             )
                             self._registrar_fallo()
                             return None
-                        trozos.append(trozo)
 
-                    if total == 0:
-                        _LOGGER.warning(
-                            "Cámara %s: el servidor devolvió una imagen vacía",
-                            self._attr_name,
-                        )
-                        self._registrar_fallo()
-                        return None
+                        declarado = response.content_length
+                        if declarado is not None and declarado > MAX_IMAGE_BYTES:
+                            _LOGGER.warning(
+                                "Cámara %s: imagen demasiado grande (%d bytes), "
+                                "se descarta",
+                                self._attr_name,
+                                declarado,
+                            )
+                            self._registrar_fallo()
+                            return None
 
-                    datos = b"".join(trozos)
+                        trozos: list[bytes] = []
+                        total = 0
+                        async for trozo in response.content.iter_chunked(64 * 1024):
+                            total += len(trozo)
+                            if total > MAX_IMAGE_BYTES:
+                                _LOGGER.warning(
+                                    "Cámara %s: la descarga superó %d bytes, se aborta",
+                                    self._attr_name,
+                                    MAX_IMAGE_BYTES,
+                                )
+                                self._registrar_fallo()
+                                return None
+                            trozos.append(trozo)
 
-                    if not _parece_imagen(datos):
-                        _LOGGER.warning(
-                            "Cámara %s: la respuesta no parece una imagen "
-                            "(empieza por %r); se descarta",
-                            self._attr_name,
-                            datos[:16],
-                        )
-                        self._registrar_fallo()
-                        return None
+                        if total == 0:
+                            _LOGGER.warning(
+                                "Cámara %s: el servidor devolvió una imagen vacía",
+                                self._attr_name,
+                            )
+                            self._registrar_fallo()
+                            return None
 
-                    self._etag = response.headers.get("ETag")
-                    self._last_modified = response.headers.get("Last-Modified")
+                        datos = b"".join(trozos)
 
-                    return datos
+                        if not _parece_imagen(datos):
+                            _LOGGER.warning(
+                                "Cámara %s: la respuesta no parece una imagen "
+                                "(empieza por %r); se descarta",
+                                self._attr_name,
+                                datos[:16],
+                            )
+                            self._registrar_fallo()
+                            return None
+
+                        self._etag = response.headers.get("ETag")
+                        self._last_modified = response.headers.get("Last-Modified")
+
+                        return datos
+                return None
 
         except TimeoutError:
             _LOGGER.warning(
@@ -286,7 +304,7 @@ class TransitCatTrafficCamera(Camera):
             _LOGGER.warning(
                 "Cámara %s: no se pudo descargar la imagen (%s): %s",
                 self._attr_name,
-                self._image_url,
+                self._image_urls,
                 err,
             )
             self._registrar_fallo()
