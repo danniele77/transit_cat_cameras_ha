@@ -35,6 +35,7 @@ DOMAIN = "transit_cat_cameras"
 #
 # Ficha del dataset: https://analisi.transparenciacatalunya.cat/d/3tzz-6b9y
 CAMERA_INVENTORY_URL = "http://www.gencat.cat/transit/opendata/cameres.xml"
+THREECAT_CAMERA_URL = "https://www.3cat.cat/3catinfo/el-temps/cameres/"
 
 # Espacios de nombres XML del feed WFS/GML del SCT.
 XML_NAMESPACES = {
@@ -61,6 +62,7 @@ ALLOWED_IMAGE_DOMAINS = (
     "bcn.cat",
     "terrassa.cat",
     "mobilitat.ad",
+    "statics.3cat.cat",
 )
 
 # Clave usada dentro de config_entry.data para guardar la lista de cámaras
@@ -124,6 +126,11 @@ INVENTORY_HEADERS = {
     "User-Agent": _USER_AGENT,
     "Referer": "https://transit.gencat.cat/",
     "Accept": "application/xml,text/xml;q=0.9,*/*;q=0.8",
+}
+
+THREECAT_HEADERS = {
+    "User-Agent": _USER_AGENT,
+    "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
 }
 
 # --- Cómo comprobamos que lo recibido es de verdad una imagen --------------

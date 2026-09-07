@@ -66,6 +66,18 @@ class TestParseCameraInventory(unittest.TestCase):
             self.assertTrue(cam.display_name)
 
 
+class TestParseThreeCatCameras(unittest.TestCase):
+    def test_parsea_webcams_y_clasifica_esqui(self) -> None:
+        html = b'''
+        <img alt="La Molina 1.700" src="https://statics.3cat.cat/meteo/beauties/v1/img/2/6/20714962.jpg">
+        <img alt="Barcelona, Port Olimpic" src="https://statics.3cat.cat/meteo/beauties/v1/img/2/4/20714942.jpg">
+        '''
+        cameras = api._parse_threecat_cameras(html)
+        self.assertEqual(len(cameras), 2)
+        self.assertEqual(cameras[0].road_name, "3Cat · Esquí")
+        self.assertEqual(cameras[1].road_name, "3Cat · Webcams")
+
+
 class TestIsAllowedImageUrl(unittest.TestCase):
     def test_genera_jpg_como_fallback_para_sct(self) -> None:
         self.assertEqual(
@@ -103,6 +115,13 @@ class TestIsAllowedImageUrl(unittest.TestCase):
     def test_rechaza_esquemas_no_http(self) -> None:
         self.assertFalse(api.is_allowed_image_url("ftp://gencat.cat/foo.gif"))
         self.assertFalse(api.is_allowed_image_url("file:///etc/passwd"))
+
+    def test_acepta_imagen_estatica_de_3cat(self) -> None:
+        self.assertTrue(
+            api.is_allowed_image_url(
+                "https://statics.3cat.cat/meteo/beauties/v1/img/2/6/20714962.jpg"
+            )
+        )
 
 
 if __name__ == "__main__":

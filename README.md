@@ -33,6 +33,11 @@ El feed mezcla en realidad **cuatro fuentes** distintas (campo `<cite:font>`):
 Las cuatro se pueden añadir; simplemente no selecciones las de Andorra si
 solo quieres cobertura catalana.
 
+También se incorporan las imágenes públicas del catálogo de cámaras de
+[3Cat](https://www.3cat.cat/3catinfo/el-temps/cameres/), incluidas las
+ubicaciones de estaciones de esquí. Aparecen en el selector como
+**3Cat · Webcams** y **3Cat · Esquí**.
+
 ## Instalación
 
 ### HACS
@@ -54,7 +59,7 @@ puntos → **Repositorios personalizados**, añade
 2. Reinicia Home Assistant.
 3. Ve a **Ajustes → Dispositivos y servicios → Añadir integración** y busca
    "Càmeres de trànsit" (o "SCT").
-4. Elige la carretera y, después, marca las cámaras concretas que quieras
+4. Elige la carretera, una categoría de 3Cat o, después, marca las cámaras concretas que quieras
    añadir.
 
 Puedes repetir el proceso (o usar el botón **Configurar** de la entrada ya

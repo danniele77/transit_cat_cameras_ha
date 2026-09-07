@@ -33,7 +33,12 @@ from homeassistant.helpers.selector import (
     SelectSelectorMode,
 )
 
-from .api import InventoryTooLargeError, TransitCatCamera, async_fetch_camera_inventory
+from .api import (
+    InventoryTooLargeError,
+    TransitCatCamera,
+    async_fetch_camera_inventory,
+    async_fetch_threecat_camera_inventory,
+)
 from .const import CONF_CAMERAS, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -44,6 +49,10 @@ async def _get_inventory_or_error(hass) -> tuple[list[TransitCatCamera] | None, 
     session = async_get_clientsession(hass)
     try:
         cameras = await async_fetch_camera_inventory(hass, session)
+        try:
+            cameras.extend(await async_fetch_threecat_camera_inventory(session))
+        except Exception:  # noqa: BLE001 - 3Cat no debe impedir las cámaras SCT
+            _LOGGER.warning("No se pudo añadir el catálogo de cámaras de 3Cat", exc_info=True)
     except TimeoutError:
         return None, "timeout"
     except InventoryTooLargeError:

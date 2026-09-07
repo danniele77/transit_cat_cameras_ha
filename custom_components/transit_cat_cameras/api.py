@@ -12,6 +12,7 @@ Responsabilidades de este módulo:
 from __future__ import annotations
 
 import asyncio
+from html.parser import HTMLParser
 import logging
 import re
 import time
@@ -29,6 +30,8 @@ from .const import (
     INVENTORY_HEADERS,
     INVENTORY_TIMEOUT_SECONDS,
     MAX_INVENTORY_BYTES,
+    THREECAT_CAMERA_URL,
+    THREECAT_HEADERS,
     XML_NAMESPACES,
 )
 
@@ -39,6 +42,77 @@ _SLUG_RE = re.compile(r"[^a-z0-9]+")
 
 class InventoryTooLargeError(Exception):
     """El XML descargado supera el tamaño máximo permitido."""
+
+
+class _ThreeCatCameraParser(HTMLParser):
+    """Extrae las imágenes actuales del catálogo público de 3Cat."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.cameras: list[tuple[str, str]] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag != "img":
+            return
+        values = dict(attrs)
+        src = values.get("src") or values.get("data-src") or ""
+        alt = (values.get("alt") or "").strip()
+        if alt and src.startswith("https://statics.3cat.cat/meteo/beauties/"):
+            self.cameras.append((alt, src))
+
+
+def _parse_threecat_cameras(html_bytes: bytes) -> list[TransitCatCamera]:
+    parser = _ThreeCatCameraParser()
+    parser.feed(html_bytes.decode("utf-8", errors="replace"))
+    cameras: list[TransitCatCamera] = []
+    seen_urls: set[str] = set()
+    ski_terms = (
+        "esquí",
+        "esqui",
+        "molina",
+        "masella",
+        "núria",
+        "nuria",
+        "boí",
+        "boi",
+        "baqueira",
+        "port aine",
+        "port del comte",
+        "capdella",
+        "vallter",
+    )
+    for name, image_url in parser.cameras:
+        if image_url in seen_urls:
+            continue
+        seen_urls.add(image_url)
+        category = "3Cat · Esquí" if any(term in name.lower() for term in ski_terms) else "3Cat · Webcams"
+        cameras.append(
+            TransitCatCamera(
+                device_id=_build_device_id("3cat", image_url),
+                source="3Cat",
+                road_name=category,
+                municipality=name,
+                kilometer_point=None,
+                latitude=None,
+                longitude=None,
+                image_url=image_url,
+            )
+        )
+    return cameras
+
+
+async def async_fetch_threecat_camera_inventory(
+    session: aiohttp.ClientSession,
+) -> list[TransitCatCamera]:
+    """Descarga las instantáneas públicas del catálogo de cámaras de 3Cat."""
+    html_bytes = await async_download_xml(
+        session,
+        THREECAT_CAMERA_URL,
+        headers=THREECAT_HEADERS,
+        timeout_seconds=INVENTORY_TIMEOUT_SECONDS,
+        max_bytes=MAX_INVENTORY_BYTES,
+    )
+    return _parse_threecat_cameras(html_bytes)
 
 
 @dataclass
