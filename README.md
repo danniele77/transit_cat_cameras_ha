@@ -1,5 +1,7 @@
 # Càmeres de trànsit (Servei Català de Trànsit) — integración para Home Assistant
 
+[![Añadir a HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=danniele77&repository=transit_cat_cameras_ha&category=integration)
+
 Integración `custom_components` para Home Assistant que añade las cámaras
 de tráfico del **Servei Català de Trànsit (SCT)** como entidades `camera.*`,
 con selector por carretera. Es el equivalente para cataluña de
@@ -32,6 +34,19 @@ Las cuatro se pueden añadir; simplemente no selecciones las de Andorra si
 solo quieres cobertura catalana.
 
 ## Instalación
+
+### HACS
+
+Pulsa el botón de arriba para abrir esta integración directamente en HACS y
+selecciona **Descargar**. Después reinicia Home Assistant y ve a
+**Ajustes → Dispositivos y servicios → Añadir integración** para buscar
+"Càmeres de trànsit".
+
+Si el botón no está disponible, abre HACS → **Integraciones** → menú de tres
+puntos → **Repositorios personalizados**, añade
+`danniele77/transit_cat_cameras_ha` como integración y pulsa **Añadir**.
+
+### Instalación manual
 
 1. Copia la carpeta `custom_components/transit_cat_cameras` dentro de la
    carpeta `custom_components` de tu configuración de Home Assistant
