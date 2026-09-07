@@ -1,0 +1,12 @@
+{
+  "domain": "transit_cat_cameras",
+  "name": "C\u00e0meres de tr\u00e0nsit (Servei Catal\u00e0 de Tr\u00e0nsit)",
+  "codeowners": [],
+  "config_flow": true,
+  "documentation": "https://transit.gencat.cat/ca/informacio-viaria/estat-transit/cameres-transit/",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "loggers": ["custom_components.transit_cat_cameras"],
+  "requirements": [],
+  "version": "0.1.0"
+}

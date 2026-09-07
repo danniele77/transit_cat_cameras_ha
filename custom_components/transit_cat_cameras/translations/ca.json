@@ -1,0 +1,69 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Càmeres de trànsit (SCT)",
+        "description": "Tria la carretera. Nota: el feed del SCT també inclou algunes càmeres de fora de Catalunya (Andorra, vies frontereres); no cal seleccionar-les.",
+        "data": {
+          "road": "Carretera"
+        }
+      },
+      "cameras": {
+        "title": "Tria les càmeres a afegir",
+        "data": {
+          "camera_ids": "Càmeres"
+        }
+      }
+    },
+    "error": {
+      "timeout": "El servidor del SCT ha trigat massa a respondre. Torna-ho a provar.",
+      "cannot_connect": "No s'ha pogut descarregar el llistat del SCT.",
+      "no_cameras_found": "El feed del SCT no ha retornat cap càmera.",
+      "no_cameras_selected": "Selecciona com a mínim una càmera.",
+      "inventory_too_large": "El llistat del SCT és més gran del que s'esperava i s'ha descartat per seguretat."
+    },
+    "abort": {
+      "already_configured": "Aquesta carretera ja està afegida."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Càmeres de trànsit (SCT)",
+        "menu_options": {
+          "add_cameras": "Afegir càmeres",
+          "remove_cameras": "Treure càmeres"
+        }
+      },
+      "road": {
+        "title": "Afegir més càmeres: tria la carretera",
+        "data": {
+          "road": "Carretera"
+        }
+      },
+      "cameras": {
+        "title": "Tria les càmeres a afegir",
+        "data": {
+          "camera_ids": "Càmeres"
+        }
+      },
+      "remove_cameras": {
+        "title": "Tria les càmeres a treure",
+        "data": {
+          "camera_ids": "Càmeres"
+        }
+      }
+    },
+    "error": {
+      "timeout": "El servidor del SCT ha trigat massa a respondre. Torna-ho a provar.",
+      "cannot_connect": "No s'ha pogut descarregar el llistat del SCT.",
+      "no_cameras_found": "El feed del SCT no ha retornat cap càmera.",
+      "no_cameras_selected": "Selecciona com a mínim una càmera.",
+      "cannot_remove_all_cameras": "No pots treure totes les càmeres des d'aquí. Si vols treure-les totes, elimina aquesta entrada sencera des de Dispositius i serveis.",
+      "inventory_too_large": "El llistat del SCT és més gran del que s'esperava i s'ha descartat per seguretat."
+    },
+    "abort": {
+      "no_cameras_to_remove": "Aquesta entrada no té cap càmera guardada."
+    }
+  }
+}
