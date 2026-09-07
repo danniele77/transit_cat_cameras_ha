@@ -40,6 +40,24 @@ esquí. Aparecen en el selector como **3Cat · Webcams** y **3Cat · Esquí**.
 Las imágenes se leen directamente desde el dominio público de estáticos de
 3Cat (`statics.3cat.cat`); no se descarga ni se reproduce ningún vídeo.
 
+## Incidencias y carteles de carretera
+
+La página de [incidencias viarias del Servei Català de Trànsit](https://cit.transit.gencat.cat/cit/AppJava/views/incidents.xhtml)
+publica un servicio JSON con retenciones, obras, averías, meteorología y
+otras afectaciones. La integración lo incorpora como sensores que se
+actualizan cada cinco minutos:
+
+- **Incidencias viarias**: total activo y conteo por carretera, con las 20
+   incidencias más recientes.
+- **Incidencias `<carretera>`**: un sensor por carretera con el detalle de
+   sus incidencias, incluyendo km, sentido, municipio, causa, nivel y destino.
+
+Estos sensores permiten crear automatizaciones o tarjetas para una ruta
+concreta, por ejemplo `B-10`, `C-32` o `AP-7`. La fuente publica incidencias
+estructuradas, no la posición GPS ni el texto de paneles variables; por eso
+se muestran como información vial y no como carteles geolocalizados en el
+mapa.
+
 ## Instalación
 
 ### HACS

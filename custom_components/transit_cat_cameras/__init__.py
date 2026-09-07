@@ -31,7 +31,7 @@ _LOGGER = logging.getLogger(__name__)
 
 _HUELLAS = "huellas_entradas"
 
-PLATFORMS = ["camera"]
+PLATFORMS = ["camera", "sensor"]
 
 
 def _huella_entry(entry: ConfigEntry) -> tuple[str, ...]:

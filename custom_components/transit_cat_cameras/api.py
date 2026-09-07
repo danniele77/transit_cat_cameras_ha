@@ -12,6 +12,7 @@ Responsabilidades de este módulo:
 from __future__ import annotations
 
 import asyncio
+import json
 from html.parser import HTMLParser
 import logging
 import re
@@ -29,6 +30,8 @@ from .const import (
     INVENTORY_CACHE_SECONDS,
     INVENTORY_HEADERS,
     INVENTORY_TIMEOUT_SECONDS,
+    INCIDENTS_HEADERS,
+    INCIDENTS_URL,
     MAX_INVENTORY_BYTES,
     THREECAT_CAMERA_URL,
     THREECAT_HEADERS,
@@ -135,6 +138,99 @@ class TransitCatCamera:
         if parts:
             return " — ".join(parts)
         return f"Càmera {self.device_id}"
+
+
+@dataclass
+class TransitCatIncident:
+    """Incidència viària publicada por el SCT."""
+
+    incident_id: str
+    road: str
+    municipality: str | None
+    kilometer_start: float | None
+    kilometer_end: float | None
+    direction: str | None
+    level: str | None
+    cause: str | None
+    description: str | None
+    destination: str | None
+    timestamp: int | None
+
+    @property
+    def display_name(self) -> str:
+        parts = [self.road]
+        if self.kilometer_start is not None:
+            parts.append(f"km {self.kilometer_start:g}")
+        if self.direction:
+            parts.append(self.direction)
+        return " · ".join(parts)
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "id": self.incident_id,
+            "carretera": self.road,
+            "municipio": self.municipality,
+            "km_inicio": self.kilometer_start,
+            "km_fin": self.kilometer_end,
+            "sentido": self.direction,
+            "nivel": self.level,
+            "causa": self.cause,
+            "descripcion": self.description,
+            "destino": self.destination,
+            "timestamp": self.timestamp,
+        }
+
+
+def _number(value: object) -> float | None:
+    try:
+        return float(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _parse_incidents(payload: bytes) -> list[TransitCatIncident]:
+    data = json.loads(payload.decode("utf-8"))
+    incidents: list[TransitCatIncident] = []
+    for item in data.get("incidents", []):
+        road = str(item.get("descCarretera") or "").strip()
+        if not road:
+            continue
+        incidents.append(
+            TransitCatIncident(
+                incident_id=str(item.get("identificador")),
+                road=road,
+                municipality=item.get("nomMunicipi"),
+                kilometer_start=_number(item.get("quilometreInicial")),
+                kilometer_end=_number(item.get("quilometreFinal")),
+                direction=item.get("descripcioSentit"),
+                level=item.get("descripcioNivell"),
+                cause=item.get("descripcioCausa"),
+                description=item.get("infoAdicional"),
+                destination=item.get("nomMunicipiDesti"),
+                timestamp=item.get("dataHora"),
+            )
+        )
+    return incidents
+
+
+async def async_fetch_incidents(
+    session: aiohttp.ClientSession,
+) -> list[TransitCatIncident]:
+    """Descarga las incidencias activas del SCT."""
+    params = {
+        "retencions": "on",
+        "obres": "on",
+        "cons": "on",
+        "meteo": "on",
+        "offset": "0",
+        "limit": "1000000",
+    }
+    async with asyncio.timeout(INVENTORY_TIMEOUT_SECONDS):
+        async with session.get(
+            INCIDENTS_URL, params=params, headers=INCIDENTS_HEADERS
+        ) as response:
+            response.raise_for_status()
+            return _parse_incidents(await response.read())
 
 
 def is_allowed_image_url(url: str) -> bool:

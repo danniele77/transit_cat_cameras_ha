@@ -78,6 +78,15 @@ class TestParseThreeCatCameras(unittest.TestCase):
         self.assertEqual(cameras[1].road_name, "3Cat · Webcams")
 
 
+class TestParseIncidents(unittest.TestCase):
+    def test_parsea_incidencia_y_conserva_datos_de_ruta(self) -> None:
+        payload = b'''{"incidents": [{"identificador": 12, "descCarretera": "C-32", "nomMunicipi": "Viladecans", "quilometreInicial": 12.5, "quilometreFinal": 13, "descripcioSentit": "Nord", "descripcioNivell": "Circulacio intensa", "descripcioCausa": "Avaria", "infoAdicional": "Un carril tallat", "nomMunicipiDesti": "Barcelona", "dataHora": 123}]}'''
+        incidents = api._parse_incidents(payload)
+        self.assertEqual(len(incidents), 1)
+        self.assertEqual(incidents[0].road, "C-32")
+        self.assertEqual(incidents[0].display_name, "C-32 · km 12.5 · Nord")
+
+
 class TestIsAllowedImageUrl(unittest.TestCase):
     def test_genera_jpg_como_fallback_para_sct(self) -> None:
         self.assertEqual(
