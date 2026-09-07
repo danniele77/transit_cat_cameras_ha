@@ -2,7 +2,7 @@
 
 Integración `custom_components` para Home Assistant que añade las cámaras
 de tráfico del **Servei Català de Trànsit (SCT)** como entidades `camera.*`,
-con selector por carretera. Es el equivalente catalán de
+con selector por carretera. Es el equivalente para cataluña de
 [jonathanathe/dgt_traffic_cameras_ha](https://github.com/jonathanathe/dgt_traffic_cameras_ha),
 construida siguiendo la misma arquitectura (config_flow, caché en memoria
 del inventario, backoff ante fallos, validación de que la respuesta es de
