@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Càmeres de trànsit (SCT)",
-        "description": "Tria la carretera. Nota: el feed del SCT també inclou algunes càmeres de fora de Catalunya (Andorra, vies frontereres); no cal seleccionar-les.",
+        "description": "Tria una carretera, una webcam o una estació d'esquí. Nota: el feed del SCT també inclou algunes càmeres de fora de Catalunya (Andorra, vies frontereres).",
         "data": {
           "road": "Carretera"
         }
@@ -44,7 +44,7 @@
         }
       },
       "road": {
-        "title": "Afegir més càmeres: tria la carretera",
+        "title": "Afegir càmeres: tria una carretera, webcam o estació d'esquí",
         "data": {
           "road": "Carretera"
         }

@@ -207,6 +207,7 @@ class TransitCatTrafficCamera(Camera):
             self._attr_extra_state_attributes["ultima_comprobacion"] = (
                 self._last_checked_at.isoformat()
             )
+            self.async_write_ha_state()
 
             # Las entidades "camera" no se sondean solas: si no avisamos
             # aquí, Home Assistant no vuelve a mirar "available" y la
