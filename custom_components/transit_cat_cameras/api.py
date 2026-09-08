@@ -147,6 +147,11 @@ def _rasos_camera() -> TransitCatCamera:
     )[0]
 
 
+def rasos_camera() -> TransitCatCamera:
+    """Devuelve la cámara oficial de Rasos sin depender de su página web."""
+    return _rasos_camera()
+
+
 async def async_fetch_rasos_camera_inventory(
     session: aiohttp.ClientSession,
 ) -> list[TransitCatCamera]:

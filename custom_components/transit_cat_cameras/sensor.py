@@ -51,7 +51,12 @@ async def async_setup_entry(
     )
     # Register entities before the network call. A temporary outage must not
     # hide the sensors from Home Assistant.
-    await coordinator.async_config_entry_first_refresh()
+    # Do not fail platform setup when the remote endpoint is temporarily
+    # unavailable. The entities stay visible and will update on the interval.
+    try:
+        await coordinator.async_config_entry_first_refresh()
+    except Exception:  # noqa: BLE001
+        _LOGGER.warning("No se pudo hacer la primera actualización de incidencias", exc_info=True)
 
 
 class _IncidentSensor(CoordinatorEntity, SensorEntity):

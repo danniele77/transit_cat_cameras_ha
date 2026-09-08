@@ -40,6 +40,7 @@ from .api import (
     async_fetch_incidents,
     async_fetch_rasos_camera_inventory,
     async_fetch_threecat_camera_inventory,
+    rasos_camera,
 )
 from .const import CONF_CAMERAS, CONF_INCIDENT_ROADS, DOMAIN
 
@@ -84,12 +85,9 @@ async def _get_inventory_or_error(hass) -> tuple[list[TransitCatCamera] | None, 
             _LOGGER.warning(
                 "No se pudo añadir el catálogo de cámaras de 3Cat", exc_info=True
             )
-        try:
-            rasos_cameras = await async_fetch_rasos_camera_inventory(session)
-            cameras.extend(rasos_cameras)
-            _LOGGER.debug("Cámaras Rasos añadidas: %d", len(rasos_cameras))
-        except Exception:  # noqa: BLE001 - Rasos no debe impedir otras cámaras
-            _LOGGER.warning("No se pudo añadir la cámara de Rasos", exc_info=True)
+        # Rasos es una cámara conocida: se añade siempre, aunque su página
+        # WordPress esté caída o cambie su HTML.
+        cameras.append(rasos_camera())
     except TimeoutError:
         return None, "timeout"
     except InventoryTooLargeError:
@@ -337,6 +335,7 @@ class TransitCatCamerasOptionsFlow(config_entries.OptionsFlow):
                     CONF_INCIDENT_ROADS: sorted(existing_roads | selected_roads),
                 },
             )
+            await self.hass.config_entries.async_reload(self.config_entry.entry_id)
             return self.async_create_entry(title="", data={})
 
         session = async_get_clientsession(self.hass)
