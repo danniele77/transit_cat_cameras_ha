@@ -46,6 +46,24 @@ from .const import CONF_CAMERAS, CONF_INCIDENT_ROADS, DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 
+def _deduplicate_cameras(cameras: list[TransitCatCamera]) -> list[TransitCatCamera]:
+    """Deduplica ubicaciones externas y conserva todas las cámaras SCT."""
+    result: list[TransitCatCamera] = []
+    seen: set[tuple[str, str, str]] = set()
+    for camera in cameras:
+        if camera.source in ("3Cat", "Rasos de Peguera"):
+            key = (
+                camera.source,
+                camera.road_name or "",
+                " ".join((camera.municipality or "").casefold().split()),
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+        result.append(camera)
+    return result
+
+
 async def _get_inventory_or_error(hass) -> tuple[list[TransitCatCamera] | None, str | None]:
     """Descarga el inventario y traduce cualquier fallo a una clave de error."""
     session = async_get_clientsession(hass)
@@ -74,6 +92,7 @@ async def _get_inventory_or_error(hass) -> tuple[list[TransitCatCamera] | None, 
         _LOGGER.exception("Fallo al descargar/parsear el inventario de cámaras del SCT")
         return None, "cannot_connect"
 
+    cameras = _deduplicate_cameras(cameras)
     if not cameras:
         return None, "no_cameras_found"
 
@@ -317,14 +336,22 @@ class TransitCatCamerasOptionsFlow(config_entries.OptionsFlow):
         try:
             incidents = await async_fetch_incidents(session)
         except Exception:  # noqa: BLE001 - mostrar un error útil en el flujo
-            _LOGGER.exception("No se pudieron cargar las incidencias del SCT")
-            return self.async_show_form(
-                step_id="add_incident_panels",
-                data_schema=vol.Schema({}),
-                errors={"base": "incidents_unavailable"},
+            _LOGGER.warning(
+                "No se pudieron cargar las incidencias; se usará el inventario de carreteras",
+                exc_info=True,
             )
+            try:
+                cameras = await async_fetch_camera_inventory(self.hass, session)
+                roads = sorted({camera.road_name for camera in cameras if camera.road_name})
+            except Exception:  # noqa: BLE001
+                return self.async_show_form(
+                    step_id="add_incident_panels",
+                    data_schema=vol.Schema({}),
+                    errors={"base": "incidents_unavailable"},
+                )
+        else:
+            roads = sorted({incident.road for incident in incidents})
 
-        roads = sorted({incident.road for incident in incidents})
         if not roads:
             return self.async_show_form(
                 step_id="add_incident_panels",
