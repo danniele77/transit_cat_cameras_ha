@@ -39,6 +39,9 @@ webcams urbanas, costeras y de montaña, entre ellas varias estaciones de
 esquí. Aparecen en el selector como **3Cat · Webcams** y **3Cat · Esquí**.
 Las imágenes se leen directamente desde el dominio público de estáticos de
 3Cat (`statics.3cat.cat`); no se descarga ni se reproduce ningún vídeo.
+La cámara oficial de [Rasos de Peguera](https://rasosdepeguera.com/webcam/)
+también aparece como **Rasos de Peguera** y utiliza su instantánea JPEG
+pública.
 
 ## Incidencias y carteles de carretera
 
@@ -56,6 +59,10 @@ Para elegir qué carreteras quieres seguir, abre la integración y pulsa
 **Configurar → Añadir paneles de incidencias**. Esto crea un sensor tipo panel
 por cada carretera seleccionada, mientras que **Añadir cámaras** queda
 reservado para las instantáneas de SCT y 3Cat.
+
+La versión actual del endpoint de incidencias requiere filtros y parámetros
+de ordenación concretos; la integración los incluye para que el selector de
+paneles pueda cargar correctamente las carreteras activas.
 
 Estos sensores permiten crear automatizaciones o tarjetas para una ruta
 concreta, por ejemplo `B-10`, `C-32` o `AP-7`. La fuente publica incidencias

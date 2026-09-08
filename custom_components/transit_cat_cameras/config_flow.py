@@ -38,6 +38,7 @@ from .api import (
     TransitCatCamera,
     async_fetch_camera_inventory,
     async_fetch_incidents,
+    async_fetch_rasos_camera_inventory,
     async_fetch_threecat_camera_inventory,
 )
 from .const import CONF_CAMERAS, CONF_INCIDENT_ROADS, DOMAIN
@@ -58,6 +59,12 @@ async def _get_inventory_or_error(hass) -> tuple[list[TransitCatCamera] | None, 
             _LOGGER.warning(
                 "No se pudo añadir el catálogo de cámaras de 3Cat", exc_info=True
             )
+        try:
+            rasos_cameras = await async_fetch_rasos_camera_inventory(session)
+            cameras.extend(rasos_cameras)
+            _LOGGER.debug("Cámaras Rasos añadidas: %d", len(rasos_cameras))
+        except Exception:  # noqa: BLE001 - Rasos no debe impedir otras cámaras
+            _LOGGER.warning("No se pudo añadir la cámara de Rasos", exc_info=True)
     except TimeoutError:
         return None, "timeout"
     except InventoryTooLargeError:

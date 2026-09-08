@@ -33,6 +33,8 @@ from .const import (
     INCIDENTS_HEADERS,
     INCIDENTS_URL,
     MAX_INVENTORY_BYTES,
+    RASOS_CAMERA_URL,
+    RASOS_HEADERS,
     THREECAT_CAMERA_URL,
     THREECAT_HEADERS,
     XML_NAMESPACES,
@@ -116,6 +118,40 @@ async def async_fetch_threecat_camera_inventory(
         max_bytes=MAX_INVENTORY_BYTES,
     )
     return _parse_threecat_cameras(html_bytes)
+
+
+def _parse_rasos_camera(html_bytes: bytes) -> list[TransitCatCamera]:
+    """Extrae la instantánea oficial de Rasos de Peguera."""
+    html = html_bytes.decode("utf-8", errors="replace")
+    image_url = "https://app.projecte4estacions.com/snapshots/refugirasos.jpg"
+    if image_url not in html:
+        return []
+    return [
+        TransitCatCamera(
+            device_id="rasos_refugi",
+            source="Rasos de Peguera",
+            road_name="Rasos de Peguera",
+            municipality="Castellar del Riu",
+            kilometer_point=None,
+            latitude=None,
+            longitude=None,
+            image_url=image_url,
+        )
+    ]
+
+
+async def async_fetch_rasos_camera_inventory(
+    session: aiohttp.ClientSession,
+) -> list[TransitCatCamera]:
+    """Descarga la cámara pública de Rasos de Peguera."""
+    html_bytes = await async_download_xml(
+        session,
+        RASOS_CAMERA_URL,
+        headers=RASOS_HEADERS,
+        timeout_seconds=INVENTORY_TIMEOUT_SECONDS,
+        max_bytes=MAX_INVENTORY_BYTES,
+    )
+    return _parse_rasos_camera(html_bytes)
 
 
 @dataclass
@@ -222,8 +258,13 @@ async def async_fetch_incidents(
         "obres": "on",
         "cons": "on",
         "meteo": "on",
+        "demarcacio": "",
+        "comarca": "",
+        "via": "",
+        "ordenacioSelect": "data",
+        "ordenacioDirSelect": "desc",
         "offset": "0",
-        "limit": "1000000",
+        "limit": "1000",
     }
     async with asyncio.timeout(INVENTORY_TIMEOUT_SECONDS):
         async with session.get(

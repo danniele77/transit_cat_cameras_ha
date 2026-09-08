@@ -36,6 +36,7 @@ DOMAIN = "transit_cat_cameras"
 # Ficha del dataset: https://analisi.transparenciacatalunya.cat/d/3tzz-6b9y
 CAMERA_INVENTORY_URL = "http://www.gencat.cat/transit/opendata/cameres.xml"
 THREECAT_CAMERA_URL = "https://www.3cat.cat/3catinfo/el-temps/cameres/"
+RASOS_CAMERA_URL = "https://rasosdepeguera.com/webcam/"
 INCIDENTS_URL = "https://cit.transit.gencat.cat/cit/rest/incidents"
 
 # Espacios de nombres XML del feed WFS/GML del SCT.
@@ -64,6 +65,7 @@ ALLOWED_IMAGE_DOMAINS = (
     "terrassa.cat",
     "mobilitat.ad",
     "statics.3cat.cat",
+    "app.projecte4estacions.com",
 )
 
 # Clave usada dentro de config_entry.data para guardar la lista de cámaras
@@ -131,6 +133,11 @@ INVENTORY_HEADERS = {
 }
 
 THREECAT_HEADERS = {
+    "User-Agent": _USER_AGENT,
+    "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+}
+
+RASOS_HEADERS = {
     "User-Agent": _USER_AGENT,
     "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
 }
