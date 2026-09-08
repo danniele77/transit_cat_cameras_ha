@@ -83,6 +83,13 @@ class TestParseThreeCatCameras(unittest.TestCase):
         self.assertEqual(len(cameras), 1)
         self.assertEqual(cameras[0].road_name, "Estaciones de esquí")
 
+    def test_deduplica_3cat_por_ubicacion(self) -> None:
+        html = b'''
+        <img alt="Amposta" src="https://statics.3cat.cat/meteo/beauties/a.jpg">
+        <img alt="Amposta" src="https://statics.3cat.cat/meteo/beauties/b.jpg">
+        '''
+        self.assertEqual(len(api._parse_threecat_cameras(html)), 1)
+
 
 class TestParseIncidents(unittest.TestCase):
     def test_parsea_incidencia_y_conserva_datos_de_ruta(self) -> None:

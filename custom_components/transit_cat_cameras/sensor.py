@@ -42,8 +42,6 @@ async def async_setup_entry(
         update_method=update_incidents,
         update_interval=timedelta(minutes=5),
     )
-    await coordinator.async_config_entry_first_refresh()
-
     # The summary is always created. Per-road entities are opt-in so an
     # existing entry does not suddenly create hundreds of entities.
     roads = sorted(set(entry.data.get(CONF_INCIDENT_ROADS, [])))
@@ -51,6 +49,9 @@ async def async_setup_entry(
         [TransitCatIncidentSummarySensor(coordinator, entry)]
         + [TransitCatRoadSensor(coordinator, entry, road) for road in roads]
     )
+    # Register entities before the network call. A temporary outage must not
+    # hide the sensors from Home Assistant.
+    await coordinator.async_config_entry_first_refresh()
 
 
 class _IncidentSensor(CoordinatorEntity, SensorEntity):

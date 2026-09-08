@@ -19,7 +19,7 @@ import re
 import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 
 import aiohttp
 from homeassistant.core import HomeAssistant
@@ -70,7 +70,7 @@ def _parse_threecat_cameras(html_bytes: bytes) -> list[TransitCatCamera]:
     parser = _ThreeCatCameraParser()
     parser.feed(html_bytes.decode("utf-8", errors="replace"))
     cameras: list[TransitCatCamera] = []
-    seen_urls: set[str] = set()
+    seen_locations: set[tuple[str, str]] = set()
     ski_terms = (
         "esquí",
         "esqui",
@@ -87,13 +87,14 @@ def _parse_threecat_cameras(html_bytes: bytes) -> list[TransitCatCamera]:
         "vallter",
     )
     for name, image_url in parser.cameras:
-        if image_url in seen_urls:
-            continue
-        seen_urls.add(image_url)
         category = "Estaciones de esquí" if any(term in name.lower() for term in ski_terms) else "3Cat · Webcams"
+        location_key = (category, " ".join(name.casefold().split()))
+        if location_key in seen_locations:
+            continue
+        seen_locations.add(location_key)
         cameras.append(
             TransitCatCamera(
-                device_id=_build_device_id("3cat", image_url),
+                device_id=_build_device_id("3cat", name),
                 source="3Cat",
                 road_name=category,
                 municipality=name,
@@ -140,18 +141,29 @@ def _parse_rasos_camera(html_bytes: bytes) -> list[TransitCatCamera]:
     ]
 
 
+def _rasos_camera() -> TransitCatCamera:
+    return _parse_rasos_camera(
+        b'<img src="https://app.projecte4estacions.com/snapshots/refugirasos.jpg">'
+    )[0]
+
+
 async def async_fetch_rasos_camera_inventory(
     session: aiohttp.ClientSession,
 ) -> list[TransitCatCamera]:
     """Descarga la cámara pública de Rasos de Peguera."""
-    html_bytes = await async_download_xml(
-        session,
-        RASOS_CAMERA_URL,
-        headers=RASOS_HEADERS,
-        timeout_seconds=INVENTORY_TIMEOUT_SECONDS,
-        max_bytes=MAX_INVENTORY_BYTES,
-    )
-    return _parse_rasos_camera(html_bytes)
+    try:
+        html_bytes = await async_download_xml(
+            session,
+            RASOS_CAMERA_URL,
+            headers=RASOS_HEADERS,
+            timeout_seconds=INVENTORY_TIMEOUT_SECONDS,
+            max_bytes=MAX_INVENTORY_BYTES,
+        )
+        cameras = _parse_rasos_camera(html_bytes)
+        return cameras or [_rasos_camera()]
+    except Exception:
+        _LOGGER.warning("No se pudo leer la página de Rasos; se usa su URL conocida")
+        return [_rasos_camera()]
 
 
 @dataclass
@@ -266,9 +278,10 @@ async def async_fetch_incidents(
         "offset": "0",
         "limit": "1000",
     }
+    query = urlencode(params)
     async with asyncio.timeout(INVENTORY_TIMEOUT_SECONDS):
         async with session.get(
-            INCIDENTS_URL, params=params, headers=INCIDENTS_HEADERS
+            f"{INCIDENTS_URL}?{query}", headers=INCIDENTS_HEADERS
         ) as response:
             response.raise_for_status()
             return _parse_incidents(await response.read())

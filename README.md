@@ -38,7 +38,7 @@ También se incorporan las imágenes públicas del catálogo de cámaras de
 webcams urbanas, costeras y de montaña, entre ellas varias estaciones de
 esquí. Aparecen en el selector como **3Cat · Webcams** y **Estaciones de
 esquí**. Rasos de Peguera y todas las webcams de nieve de 3Cat aparecen
-juntas en esta categoría.
+juntas en esta categoría, sin duplicar ubicaciones.
 Las imágenes se leen directamente desde el dominio público de estáticos de
 3Cat (`statics.3cat.cat`); no se descarga ni se reproduce ningún vídeo.
 La cámara oficial de [Rasos de Peguera](https://rasosdepeguera.com/webcam/)
@@ -109,6 +109,11 @@ Cada cámara incluye los atributos `ultima_comprobacion` y
 También muestra `fecha_servidor` cuando el origen proporciona una fecha HTTP.
 El dispositivo incluye el botón **Actualizar instantáneas**, que fuerza una
 comprobación inmediata sin esperar los 120 segundos de caché.
+
+El resumen `Incidencias viarias` se registra aunque la API del SCT esté
+temporalmente caída y empieza con valor `0`; los sensores por carretera se
+registran al seleccionar sus carreteras, aunque en ese momento no tengan una
+incidencia activa.
 
 ## Cómo protege al servidor de origen
 
