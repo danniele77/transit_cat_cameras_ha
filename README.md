@@ -115,6 +115,10 @@ temporalmente caída y empieza con valor `0`; los sensores por carretera se
 registran al seleccionar sus carreteras, aunque en ese momento no tengan una
 incidencia activa.
 
+Al actualizar desde versiones anteriores, la integración limpia automáticamente
+las cámaras duplicadas de 3Cat y Rasos guardadas en la configuración y en el
+registro de entidades.
+
 ## Cómo protege al servidor de origen
 
 Igual que la integración de referencia de la DGT:

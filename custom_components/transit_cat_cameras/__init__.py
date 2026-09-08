@@ -23,6 +23,7 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 
 from .api import clear_inventory_cache
 from .const import CONF_CAMERAS, CONF_INCIDENT_ROADS, DOMAIN
@@ -32,6 +33,33 @@ _LOGGER = logging.getLogger(__name__)
 _HUELLAS = "huellas_entradas"
 
 PLATFORMS = ["camera", "sensor", "button"]
+
+
+def _camera_key(camera: dict) -> tuple[str, ...]:
+    source = camera.get("source", "")
+    if source in ("3Cat", "Rasos de Peguera"):
+        return (
+            source,
+            camera.get("road_name", ""),
+            " ".join((camera.get("municipality") or "").casefold().split()),
+        )
+    return ("device", camera.get("device_id", ""))
+
+
+def _deduplicate_entry_cameras(cameras: list[dict]) -> tuple[list[dict], set[str]]:
+    """Consolida duplicados antiguos guardados antes de la versión 0.5.0."""
+    result: list[dict] = []
+    seen: set[tuple[str, ...]] = set()
+    removed_ids: set[str] = set()
+    for camera in cameras:
+        key = _camera_key(camera)
+        if key in seen:
+            if camera.get("device_id"):
+                removed_ids.add(camera["device_id"])
+            continue
+        seen.add(key)
+        result.append(camera)
+    return result, removed_ids
 
 
 def _huella_entry(entry: ConfigEntry) -> tuple[str, ...]:
@@ -51,6 +79,20 @@ def _huella_entry(entry: ConfigEntry) -> tuple[str, ...]:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Configura una entrada ya creada."""
+    cameras = list(entry.data.get(CONF_CAMERAS, []))
+    normalized_cameras, removed_ids = _deduplicate_entry_cameras(cameras)
+    if len(normalized_cameras) != len(cameras):
+        hass.config_entries.async_update_entry(
+            entry,
+            data={**entry.data, CONF_CAMERAS: normalized_cameras},
+        )
+        registry = er.async_get(hass)
+        for device_id in removed_ids:
+            old_unique_id = f"{entry.entry_id}_{device_id}"
+            entity_id = registry.async_get_entity_id("camera", DOMAIN, old_unique_id)
+            if entity_id:
+                registry.async_remove(entity_id)
+
     hass.data.setdefault(DOMAIN, {}).setdefault(_HUELLAS, {})[entry.entry_id] = (
         _huella_entry(entry)
     )

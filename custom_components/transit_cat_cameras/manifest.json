@@ -8,5 +8,5 @@
   "iot_class": "cloud_polling",
   "loggers": ["custom_components.transit_cat_cameras"],
   "requirements": [],
-  "version": "0.5.2"
+  "version": "0.5.3"
 }
