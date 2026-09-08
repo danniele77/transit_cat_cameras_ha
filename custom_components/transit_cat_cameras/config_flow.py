@@ -80,8 +80,35 @@ async def _get_inventory_or_error(hass) -> tuple[list[TransitCatCamera] | None, 
     return cameras, None
 
 
-def _road_schema(items: list[TransitCatCamera]) -> vol.Schema:
-    roads = sorted({i.road_name for i in items if i.road_name})
+def _camera_source(camera: TransitCatCamera) -> str:
+    if camera.road_name == "Estaciones de esquí":
+        return "ski"
+    if camera.source == "3Cat":
+        return "webcams"
+    return "sct"
+
+
+def _source_schema() -> vol.Schema:
+    return vol.Schema(
+        {
+            vol.Required("source"): SelectSelector(
+                SelectSelectorConfig(
+                    options=[
+                        SelectOptionDict(value="sct", label="SCT · Carreteras"),
+                        SelectOptionDict(value="webcams", label="3Cat · Webcams"),
+                        SelectOptionDict(value="ski", label="Estaciones de esquí"),
+                    ],
+                    mode=SelectSelectorMode.DROPDOWN,
+                )
+            )
+        }
+    )
+
+
+def _road_schema(items: list[TransitCatCamera], source: str) -> vol.Schema:
+    roads = sorted(
+        {i.road_name for i in items if i.road_name and _camera_source(i) == source}
+    )
     return vol.Schema(
         {
             vol.Required("road"): SelectSelector(
@@ -178,6 +205,7 @@ class TransitCatCamerasConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         self._all_cameras: list[TransitCatCamera] = []
+        self._camera_source: str | None = None
         self._road: str | None = None
 
     async def async_step_user(
@@ -193,11 +221,20 @@ class TransitCatCamerasConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._all_cameras = cameras
 
         if user_input:
+            self._camera_source = user_input["source"]
+            return await self.async_step_road()
+
+        return self.async_show_form(step_id="user", data_schema=_source_schema())
+
+    async def async_step_road(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        if user_input:
             self._road = user_input["road"]
             return await self.async_step_cameras()
-
         return self.async_show_form(
-            step_id="user", data_schema=_road_schema(self._all_cameras)
+            step_id="road",
+            data_schema=_road_schema(self._all_cameras, self._camera_source or "sct"),
         )
 
     async def async_step_cameras(
@@ -302,7 +339,12 @@ class TransitCatCamerasOptionsFlow(config_entries.OptionsFlow):
     async def async_step_add_cameras(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        return await self.async_step_road(user_input)
+        if user_input:
+            self._camera_source = user_input["source"]
+            return await self.async_step_road()
+        return self.async_show_form(
+            step_id="add_cameras", data_schema=_source_schema()
+        )
 
     async def async_step_road(
         self, user_input: dict[str, Any] | None = None
@@ -320,7 +362,8 @@ class TransitCatCamerasOptionsFlow(config_entries.OptionsFlow):
             return await self.async_step_cameras()
 
         return self.async_show_form(
-            step_id="road", data_schema=_road_schema(self._all_cameras)
+            step_id="road",
+            data_schema=_road_schema(self._all_cameras, self._camera_source or "sct"),
         )
 
     async def async_step_cameras(

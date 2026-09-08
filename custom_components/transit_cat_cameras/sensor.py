@@ -44,13 +44,9 @@ async def async_setup_entry(
     )
     await coordinator.async_config_entry_first_refresh()
 
-    live_roads = {incident.road for incident in coordinator.data}
-    configured_roads = entry.data.get(CONF_INCIDENT_ROADS)
-    # Entries created before panel selection existed have no key: preserve
-    # the previous automatic behavior and expose every active road.
-    roads = sorted(
-        live_roads if configured_roads is None else set(configured_roads)
-    )
+    # The summary is always created. Per-road entities are opt-in so an
+    # existing entry does not suddenly create hundreds of entities.
+    roads = sorted(set(entry.data.get(CONF_INCIDENT_ROADS, [])))
     async_add_entities(
         [TransitCatIncidentSummarySensor(coordinator, entry)]
         + [TransitCatRoadSensor(coordinator, entry, road) for road in roads]
