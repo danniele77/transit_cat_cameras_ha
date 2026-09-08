@@ -132,7 +132,7 @@ def _parse_rasos_camera(html_bytes: bytes) -> list[TransitCatCamera]:
             device_id="rasos_refugi",
             source="Rasos de Peguera",
             road_name="Estaciones de esquí",
-            municipality="Castellar del Riu",
+            municipality="Xalet Refugi Rasos de Peguera",
             kilometer_point=None,
             latitude=None,
             longitude=None,

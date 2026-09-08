@@ -72,6 +72,11 @@ estructuradas, no la posición GPS ni el texto de paneles variables; por eso
 se muestran como información vial y no como carteles geolocalizados en el
 mapa.
 
+Las incidencias se configuran como una entrada independiente: al añadir la
+integración se elige **Incidencias viarias** y después las carreteras. Las
+cámaras se configuran en otra entrada eligiendo **Cámaras y webcams**. Esto
+evita mezclar entidades `camera` y `sensor` dentro del mismo dispositivo.
+
 ## Instalación
 
 ### HACS

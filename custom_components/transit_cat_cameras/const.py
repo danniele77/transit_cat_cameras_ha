@@ -72,6 +72,9 @@ ALLOWED_IMAGE_DOMAINS = (
 # que el usuario ha seleccionado.
 CONF_CAMERAS = "cameras"
 CONF_INCIDENT_ROADS = "incident_roads"
+CONF_DEVICE_TYPE = "device_type"
+DEVICE_TYPE_CAMERAS = "cameras"
+DEVICE_TYPE_INCIDENTS = "incidents"
 
 # ---------------------------------------------------------------------------
 # Control de frecuencia de peticiones

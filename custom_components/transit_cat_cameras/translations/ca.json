@@ -2,11 +2,20 @@
   "config": {
     "step": {
       "user": {
-        "title": "Càmeres de trànsit (SCT)",
-        "description": "Tria la carretera. Nota: el feed del SCT també inclou algunes càmeres de fora de Catalunya (Andorra, vies frontereres); no cal seleccionar-les.",
-        "data": {
-          "road": "Carretera"
+        "title": "Què vols afegir?",
+        "menu_options": {
+          "camera_type": "Càmeres i webcams",
+          "incident_type": "Incidències viàries"
         }
+      },
+      "camera_type": {
+        "title": "Font de càmeres",
+        "data": { "source": "Font" }
+      },
+      "incident_type": {
+        "title": "Carreteres amb incidències",
+        "description": "Selecciona les carreteres que vols controlar.",
+        "data": { "roads": "Carreteres" }
       },
       "cameras": {
         "title": "Tria les càmeres a afegir",

@@ -26,13 +26,20 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
 from .api import clear_inventory_cache, rasos_camera
-from .const import CONF_CAMERAS, CONF_INCIDENT_ROADS, DOMAIN
+from .const import (
+    CONF_CAMERAS,
+    CONF_DEVICE_TYPE,
+    CONF_INCIDENT_ROADS,
+    DEVICE_TYPE_INCIDENTS,
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
 _HUELLAS = "huellas_entradas"
 
-PLATFORMS = ["camera", "sensor", "button"]
+CAMERA_PLATFORMS = ["camera", "button"]
+INCIDENT_PLATFORMS = ["sensor"]
 
 
 def _camera_key(camera: dict) -> tuple[str, ...]:
@@ -79,9 +86,22 @@ def _huella_entry(entry: ConfigEntry) -> tuple[str, ...]:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Configura una entrada ya creada."""
+    if entry.data.get(CONF_DEVICE_TYPE) == DEVICE_TYPE_INCIDENTS:
+        entry_platforms = INCIDENT_PLATFORMS
+    else:
+        entry_platforms = CAMERA_PLATFORMS
+
     cameras = list(entry.data.get(CONF_CAMERAS, []))
+    if entry.data.get(CONF_DEVICE_TYPE) == DEVICE_TYPE_INCIDENTS:
+        cameras = []
     normalized_cameras, removed_ids = _deduplicate_entry_cameras(cameras)
-    if not any(camera.get("device_id") == "rasos_refugi" for camera in normalized_cameras):
+    if (
+        entry.data.get(CONF_DEVICE_TYPE) != DEVICE_TYPE_INCIDENTS
+        and not any(
+            camera.get("device_id") == "rasos_refugi"
+            for camera in normalized_cameras
+        )
+    ):
         rasos = rasos_camera()
         normalized_cameras.append(
             {
@@ -113,13 +133,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await hass.config_entries.async_forward_entry_setups(entry, entry_platforms)
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Descarga una entrada (elimina sus entidades)."""
-    descargada = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    entry_platforms = (
+        INCIDENT_PLATFORMS
+        if entry.data.get(CONF_DEVICE_TYPE) == DEVICE_TYPE_INCIDENTS
+        else CAMERA_PLATFORMS
+    )
+    descargada = await hass.config_entries.async_unload_platforms(entry, entry_platforms)
 
     if descargada:
         domain_data = hass.data.get(DOMAIN, {})

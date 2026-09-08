@@ -2,11 +2,20 @@
   "config": {
     "step": {
       "user": {
-        "title": "Font de càmeres",
-        "description": "Tria el tipus de càmera que vols afegir.",
-        "data": {
-          "source": "Font"
+        "title": "Què vols afegir?",
+        "menu_options": {
+          "camera_type": "Càmeres i webcams",
+          "incident_type": "Incidències viàries"
         }
+      },
+      "camera_type": {
+        "title": "Font de càmeres",
+        "data": { "source": "Font" }
+      },
+      "incident_type": {
+        "title": "Carreteres amb incidències",
+        "description": "Selecciona les carreteres que vols controlar.",
+        "data": { "roads": "Carreteres" }
       },
       "cameras": {
         "title": "Tria les càmeres a afegir",

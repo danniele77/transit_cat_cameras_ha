@@ -2,11 +2,20 @@
   "config": {
     "step": {
       "user": {
-        "title": "Fuente de cámaras",
-        "description": "Elige el tipo de cámara que quieres añadir.",
-        "data": {
-          "source": "Fuente"
+        "title": "¿Qué quieres añadir?",
+        "menu_options": {
+          "camera_type": "Cámaras y webcams",
+          "incident_type": "Incidencias viarias"
         }
+      },
+      "camera_type": {
+        "title": "Fuente de cámaras",
+        "data": { "source": "Fuente" }
+      },
+      "incident_type": {
+        "title": "Carreteras con incidencias",
+        "description": "Selecciona las carreteras que quieres controlar.",
+        "data": { "roads": "Carreteras" }
       },
       "cameras": {
         "title": "Elige las cámaras a añadir",

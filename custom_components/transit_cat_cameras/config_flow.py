@@ -42,7 +42,14 @@ from .api import (
     async_fetch_threecat_camera_inventory,
     rasos_camera,
 )
-from .const import CONF_CAMERAS, CONF_INCIDENT_ROADS, DOMAIN
+from .const import (
+    CONF_CAMERAS,
+    CONF_DEVICE_TYPE,
+    CONF_INCIDENT_ROADS,
+    DEVICE_TYPE_CAMERAS,
+    DEVICE_TYPE_INCIDENTS,
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -235,20 +242,63 @@ class TransitCatCamerasConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Descarga el inventario y pide la carretera."""
+        """Elige entre cámaras y paneles de incidencias."""
+        return self.async_show_menu(
+            step_id="user", menu_options=["camera_type", "incident_type"]
+        )
+
+    async def async_step_camera_type(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Inicia una entrada exclusivamente de cámaras."""
         if not self._all_cameras:
             cameras, error = await _get_inventory_or_error(self.hass)
             if error:
                 return self.async_show_form(
-                    step_id="user", data_schema=vol.Schema({}), errors={"base": error}
+                    step_id="camera_type", data_schema=vol.Schema({}), errors={"base": error}
                 )
             self._all_cameras = cameras
-
         if user_input:
             self._camera_source = user_input["source"]
             return await self.async_step_road()
+        return self.async_show_form(step_id="camera_type", data_schema=_source_schema())
 
-        return self.async_show_form(step_id="user", data_schema=_source_schema())
+    async def async_step_incident_type(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Inicia una entrada exclusivamente de incidencias/paneles."""
+        session = async_get_clientsession(self.hass)
+        try:
+            incidents = await async_fetch_incidents(session)
+            roads = sorted({incident.road for incident in incidents})
+        except Exception:
+            roads = list(_FALLBACK_INCIDENT_ROADS)
+            _LOGGER.warning("API SCT no disponible; se usa el catálogo de carreteras", exc_info=True)
+        return await self._incident_entry(roads, user_input)
+
+    async def _incident_entry(
+        self, roads: list[str], user_input: dict[str, Any] | None
+    ) -> config_entries.ConfigFlowResult:
+        if user_input is not None:
+            selected = sorted(set(user_input["roads"]))
+            if not selected:
+                return self.async_show_form(
+                    step_id="incident_type",
+                    data_schema=_incident_roads_schema(roads),
+                    errors={"base": "no_incident_roads"},
+                )
+            await self.async_set_unique_id("incidents_" + "_".join(selected))
+            self._abort_if_unique_id_configured()
+            return self.async_create_entry(
+                title=f"SCT · Incidencias · {', '.join(selected[:3])}",
+                data={
+                    CONF_DEVICE_TYPE: DEVICE_TYPE_INCIDENTS,
+                    CONF_INCIDENT_ROADS: selected,
+                },
+            )
+        return self.async_show_form(
+            step_id="incident_type", data_schema=_incident_roads_schema(roads)
+        )
 
     async def async_step_road(
         self, user_input: dict[str, Any] | None = None
@@ -288,7 +338,10 @@ class TransitCatCamerasConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_configured()
 
             title = f"SCT · {self._road}"
-            return self.async_create_entry(title=title, data={CONF_CAMERAS: selected})
+            return self.async_create_entry(
+                title=title,
+                data={CONF_DEVICE_TYPE: DEVICE_TYPE_CAMERAS, CONF_CAMERAS: selected},
+            )
 
         return self.async_show_form(
             step_id="cameras", data_schema=_cameras_schema(candidates)
@@ -314,9 +367,12 @@ class TransitCatCamerasOptionsFlow(config_entries.OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
+        if self.config_entry.data.get(CONF_DEVICE_TYPE) == DEVICE_TYPE_INCIDENTS:
+            return self.async_show_menu(
+                step_id="init", menu_options=["add_incident_panels"]
+            )
         return self.async_show_menu(
-            step_id="init",
-            menu_options=["add_cameras", "add_incident_panels", "remove_cameras"],
+            step_id="init", menu_options=["add_cameras", "remove_cameras"]
         )
 
     async def async_step_add_incident_panels(
@@ -335,7 +391,6 @@ class TransitCatCamerasOptionsFlow(config_entries.OptionsFlow):
                     CONF_INCIDENT_ROADS: sorted(existing_roads | selected_roads),
                 },
             )
-            await self.hass.config_entries.async_reload(self.config_entry.entry_id)
             return self.async_create_entry(title="", data={})
 
         session = async_get_clientsession(self.hass)
