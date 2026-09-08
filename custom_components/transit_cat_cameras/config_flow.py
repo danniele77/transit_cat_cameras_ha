@@ -45,6 +45,12 @@ from .const import CONF_CAMERAS, CONF_INCIDENT_ROADS, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+_FALLBACK_INCIDENT_ROADS = (
+    "A-2", "AP-7", "B-10", "B-20", "B-23", "B-30", "C-16", "C-17",
+    "C-25", "C-31", "C-32", "C-33", "C-35", "C-58", "C-60",
+    "N-340", "N-II", "T-11",
+)
+
 
 def _deduplicate_cameras(cameras: list[TransitCatCamera]) -> list[TransitCatCamera]:
     """Deduplica ubicaciones externas y conserva todas las cámaras SCT."""
@@ -68,7 +74,8 @@ async def _get_inventory_or_error(hass) -> tuple[list[TransitCatCamera] | None, 
     """Descarga el inventario y traduce cualquier fallo a una clave de error."""
     session = async_get_clientsession(hass)
     try:
-        cameras = await async_fetch_camera_inventory(hass, session)
+        # Never mutate the shared inventory cache when adding external feeds.
+        cameras = list(await async_fetch_camera_inventory(hass, session))
         try:
             threecat_cameras = await async_fetch_threecat_camera_inventory(session)
             cameras.extend(threecat_cameras)
@@ -344,20 +351,13 @@ class TransitCatCamerasOptionsFlow(config_entries.OptionsFlow):
                 cameras = await async_fetch_camera_inventory(self.hass, session)
                 roads = sorted({camera.road_name for camera in cameras if camera.road_name})
             except Exception:  # noqa: BLE001
-                return self.async_show_form(
-                    step_id="add_incident_panels",
-                    data_schema=vol.Schema({}),
-                    errors={"base": "incidents_unavailable"},
-                )
+                _LOGGER.warning("Se usará la lista de carreteras de reserva", exc_info=True)
+                roads = list(_FALLBACK_INCIDENT_ROADS)
         else:
             roads = sorted({incident.road for incident in incidents})
 
         if not roads:
-            return self.async_show_form(
-                step_id="add_incident_panels",
-                data_schema=vol.Schema({}),
-                errors={"base": "no_incident_roads"},
-            )
+            roads = list(_FALLBACK_INCIDENT_ROADS)
         return self.async_show_form(
             step_id="add_incident_panels",
             data_schema=_incident_roads_schema(roads),
