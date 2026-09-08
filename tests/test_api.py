@@ -77,6 +77,12 @@ class TestParseThreeCatCameras(unittest.TestCase):
         self.assertEqual(cameras[0].road_name, "3Cat · Esquí")
         self.assertEqual(cameras[1].road_name, "3Cat · Webcams")
 
+    def test_parsea_rasos_de_peguera(self) -> None:
+        html = b'<img src="https://app.projecte4estacions.com/snapshots/refugirasos.jpg?r=1">'
+        cameras = api._parse_rasos_camera(html)
+        self.assertEqual(len(cameras), 1)
+        self.assertEqual(cameras[0].road_name, "Rasos de Peguera")
+
 
 class TestParseIncidents(unittest.TestCase):
     def test_parsea_incidencia_y_conserva_datos_de_ruta(self) -> None:
