@@ -21,6 +21,7 @@ Protección del servidor de origen (mismo esquema que dgt_traffic_cameras_ha):
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timezone
 import logging
 import time
 
@@ -71,6 +72,9 @@ async def async_setup_entry(
         entities.append(TransitCatTrafficCamera(entry, camera_data))
 
     async_add_entities(entities)
+    hass.data.setdefault(DOMAIN, {}).setdefault("camera_entities", {})[
+        entry.entry_id
+    ] = entities
 
 
 class TransitCatTrafficCamera(Camera):
@@ -114,9 +118,19 @@ class TransitCatTrafficCamera(Camera):
 
         self._etag: str | None = None
         self._last_modified: str | None = None
+        self._last_checked_at: datetime | None = None
+        self._server_date: str | None = None
 
         self._fallos_consecutivos = 0
         self._reintentar_a_partir_de: float = 0.0
+
+        self._attr_extra_state_attributes.update(
+            {
+                "ultima_comprobacion": None,
+                "fecha_servidor": None,
+                "actualizacion_local": None,
+            }
+        )
 
     @property
     def frame_interval(self) -> float:
@@ -145,6 +159,12 @@ class TransitCatTrafficCamera(Camera):
     def _registrar_exito(self) -> None:
         self._fallos_consecutivos = 0
         self._reintentar_a_partir_de = 0.0
+
+    async def async_force_refresh(self) -> None:
+        """Fuerza una comprobación inmediata ignorando caché y backoff."""
+        self._cached_at = 0.0
+        self._reintentar_a_partir_de = 0.0
+        await self.async_camera_image()
 
     async def async_camera_image(
         self, width: int | None = None, height: int | None = None
@@ -182,6 +202,11 @@ class TransitCatTrafficCamera(Camera):
             self._cached_at = ahora
             if imagen is not _SIN_CAMBIOS:
                 self._cached_image = imagen
+
+            self._last_checked_at = datetime.now(timezone.utc)
+            self._attr_extra_state_attributes["ultima_comprobacion"] = (
+                self._last_checked_at.isoformat()
+            )
 
             # Las entidades "camera" no se sondean solas: si no avisamos
             # aquí, Home Assistant no vuelve a mirar "available" y la
@@ -288,6 +313,13 @@ class TransitCatTrafficCamera(Camera):
 
                         self._etag = response.headers.get("ETag")
                         self._last_modified = response.headers.get("Last-Modified")
+                        self._server_date = response.headers.get("Date")
+                        self._attr_extra_state_attributes["fecha_servidor"] = (
+                            self._server_date
+                        )
+                        self._attr_extra_state_attributes["actualizacion_local"] = (
+                            datetime.now(timezone.utc).isoformat()
+                        )
 
                         return datos
                 return None

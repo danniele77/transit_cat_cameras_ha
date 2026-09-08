@@ -31,7 +31,7 @@ _LOGGER = logging.getLogger(__name__)
 
 _HUELLAS = "huellas_entradas"
 
-PLATFORMS = ["camera", "sensor"]
+PLATFORMS = ["camera", "sensor", "button"]
 
 
 def _huella_entry(entry: ConfigEntry) -> tuple[str, ...]:
@@ -66,6 +66,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if descargada:
         domain_data = hass.data.get(DOMAIN, {})
+        domain_data.get("camera_entities", {}).pop(entry.entry_id, None)
         huellas = domain_data.get(_HUELLAS, {})
         huellas.pop(entry.entry_id, None)
 

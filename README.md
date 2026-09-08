@@ -36,12 +36,13 @@ solo quieres cobertura catalana.
 También se incorporan las imágenes públicas del catálogo de cámaras de
 [3Cat](https://www.3cat.cat/3catinfo/el-temps/cameres/). El catálogo incluye
 webcams urbanas, costeras y de montaña, entre ellas varias estaciones de
-esquí. Aparecen en el selector como **3Cat · Webcams** y **3Cat · Esquí**.
+esquí. Aparecen en el selector como **3Cat · Webcams** y **Estaciones de
+esquí**.
 Las imágenes se leen directamente desde el dominio público de estáticos de
 3Cat (`statics.3cat.cat`); no se descarga ni se reproduce ningún vídeo.
 La cámara oficial de [Rasos de Peguera](https://rasosdepeguera.com/webcam/)
-también aparece como **Rasos de Peguera** y utiliza su instantánea JPEG
-pública.
+también se agrupa dentro de **Estaciones de esquí** y utiliza su instantánea
+JPEG pública.
 
 ## Incidencias y carteles de carretera
 
@@ -91,7 +92,7 @@ puntos → **Repositorios personalizados**, añade
 2. Reinicia Home Assistant.
 3. Ve a **Ajustes → Dispositivos y servicios → Añadir integración** y busca
    "Càmeres de trànsit" (o "SCT").
-4. Elige una carretera del SCT, **3Cat · Webcams** o **3Cat · Esquí** y marca
+4. Elige una carretera del SCT, **3Cat · Webcams** o **Estaciones de esquí** y marca
    las cámaras concretas que quieras añadir.
 
 Puedes repetir el proceso (o usar el botón **Configurar** de la entrada ya
@@ -101,6 +102,12 @@ no hace falta eliminar la entrada: abre **Configurar → Añadir cámaras** y
 selecciona una de las categorías 3Cat. Cada carretera o categoría crea su
 propia entrada, agrupando sus cámaras bajo un mismo dispositivo en Home
 Assistant.
+
+Cada cámara incluye los atributos `ultima_comprobacion` y
+`actualizacion_local`, que indican cuándo Home Assistant consultó la imagen.
+También muestra `fecha_servidor` cuando el origen proporciona una fecha HTTP.
+El dispositivo incluye el botón **Actualizar instantáneas**, que fuerza una
+comprobación inmediata sin esperar los 120 segundos de caché.
 
 ## Cómo protege al servidor de origen
 

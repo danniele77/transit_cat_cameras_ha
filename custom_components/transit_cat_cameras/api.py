@@ -90,7 +90,7 @@ def _parse_threecat_cameras(html_bytes: bytes) -> list[TransitCatCamera]:
         if image_url in seen_urls:
             continue
         seen_urls.add(image_url)
-        category = "3Cat · Esquí" if any(term in name.lower() for term in ski_terms) else "3Cat · Webcams"
+        category = "Estaciones de esquí" if any(term in name.lower() for term in ski_terms) else "3Cat · Webcams"
         cameras.append(
             TransitCatCamera(
                 device_id=_build_device_id("3cat", image_url),
@@ -130,7 +130,7 @@ def _parse_rasos_camera(html_bytes: bytes) -> list[TransitCatCamera]:
         TransitCatCamera(
             device_id="rasos_refugi",
             source="Rasos de Peguera",
-            road_name="Rasos de Peguera",
+            road_name="Estaciones de esquí",
             municipality="Castellar del Riu",
             kilometer_point=None,
             latitude=None,
