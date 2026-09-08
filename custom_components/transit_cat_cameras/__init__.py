@@ -25,7 +25,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
-from .api import clear_inventory_cache
+from .api import clear_inventory_cache, rasos_camera
 from .const import CONF_CAMERAS, CONF_INCIDENT_ROADS, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -81,6 +81,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Configura una entrada ya creada."""
     cameras = list(entry.data.get(CONF_CAMERAS, []))
     normalized_cameras, removed_ids = _deduplicate_entry_cameras(cameras)
+    if not any(camera.get("device_id") == "rasos_refugi" for camera in normalized_cameras):
+        rasos = rasos_camera()
+        normalized_cameras.append(
+            {
+                "device_id": rasos.device_id,
+                "name": rasos.display_name,
+                "road_name": rasos.road_name,
+                "municipality": rasos.municipality,
+                "kilometer_point": rasos.kilometer_point,
+                "source": rasos.source,
+                "latitude": rasos.latitude,
+                "longitude": rasos.longitude,
+                "image_url": rasos.image_url,
+            }
+        )
     if len(normalized_cameras) != len(cameras):
         hass.config_entries.async_update_entry(
             entry,

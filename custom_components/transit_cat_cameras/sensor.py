@@ -28,12 +28,24 @@ async def async_setup_entry(
 ) -> None:
     """Crea un resumen general y un sensor por carretera."""
     session = async_get_clientsession(hass)
+    last_good_data: list[TransitCatIncident] = []
+    last_error: str | None = None
+
     async def update_incidents() -> list[TransitCatIncident]:
+        nonlocal last_good_data, last_error
         try:
-            return await async_fetch_incidents(session)
-        except Exception:  # noqa: BLE001 - los sensores deben seguir disponibles
-            _LOGGER.warning("No se pudieron actualizar las incidencias del SCT", exc_info=True)
-            return []
+            data = await async_fetch_incidents(session)
+            last_good_data = data
+            last_error = None
+            return data
+        except Exception as err:  # noqa: BLE001 - conservar último dato válido
+            last_error = str(err)
+            _LOGGER.warning(
+                "No se pudieron actualizar las incidencias del SCT; "
+                "se conserva el último dato válido",
+                exc_info=True,
+            )
+            return last_good_data
 
     coordinator = DataUpdateCoordinator(
         hass,
@@ -47,7 +59,10 @@ async def async_setup_entry(
     roads = sorted(set(entry.data.get(CONF_INCIDENT_ROADS, [])))
     async_add_entities(
         [TransitCatIncidentSummarySensor(coordinator, entry)]
-        + [TransitCatRoadSensor(coordinator, entry, road) for road in roads]
+        + [
+            TransitCatRoadSensor(coordinator, entry, road, lambda: last_error)
+            for road in roads
+        ]
     )
     # Register entities before the network call. A temporary outage must not
     # hide the sensors from Home Assistant.
@@ -62,11 +77,17 @@ async def async_setup_entry(
 class _IncidentSensor(CoordinatorEntity, SensorEntity):
     _attr_icon = "mdi:traffic-cone"
     _attr_native_unit_of_measurement = "incidencias"
+    _attr_should_poll = False
 
     def __init__(self, coordinator, entry: ConfigEntry, unique_suffix: str) -> None:
         super().__init__(coordinator)
         self._entry = entry
         self._attr_unique_id = f"{entry.entry_id}_incidents_{unique_suffix}"
+
+    @property
+    def available(self) -> bool:
+        """El sensor sigue visible aunque la API esté temporalmente caída."""
+        return True
 
     @property
     def _incidents(self) -> list[TransitCatIncident]:
@@ -102,9 +123,10 @@ class TransitCatIncidentSummarySensor(_IncidentSensor):
 
 
 class TransitCatRoadSensor(_IncidentSensor):
-    def __init__(self, coordinator, entry: ConfigEntry, road: str) -> None:
+    def __init__(self, coordinator, entry: ConfigEntry, road: str, error_getter) -> None:
         super().__init__(coordinator, entry, road.lower().replace(" ", "_"))
         self._road = road
+        self._error_getter = error_getter
         self._attr_name = f"Incidencias {road}"
 
     @property
@@ -120,5 +142,6 @@ class TransitCatRoadSensor(_IncidentSensor):
         return {
             "carretera": self._road,
             "incidencias": self._details(self._road_incidents),
+            "error_actualizacion": self._error_getter(),
             "fuente": "https://cit.transit.gencat.cat/cit/AppJava/views/incidents.xhtml",
         }
