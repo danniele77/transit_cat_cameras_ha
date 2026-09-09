@@ -86,8 +86,11 @@ def _huella_entry(entry: ConfigEntry) -> tuple[str, ...]:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Configura una entrada ya creada."""
+    has_incident_roads = bool(entry.data.get(CONF_INCIDENT_ROADS))
     if entry.data.get(CONF_DEVICE_TYPE) == DEVICE_TYPE_INCIDENTS:
         entry_platforms = INCIDENT_PLATFORMS
+    elif has_incident_roads:
+        entry_platforms = CAMERA_PLATFORMS + INCIDENT_PLATFORMS
     else:
         entry_platforms = CAMERA_PLATFORMS
 
@@ -139,11 +142,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Descarga una entrada (elimina sus entidades)."""
-    entry_platforms = (
-        INCIDENT_PLATFORMS
-        if entry.data.get(CONF_DEVICE_TYPE) == DEVICE_TYPE_INCIDENTS
-        else CAMERA_PLATFORMS
-    )
+    if entry.data.get(CONF_DEVICE_TYPE) == DEVICE_TYPE_INCIDENTS:
+        entry_platforms = INCIDENT_PLATFORMS
+    elif entry.data.get(CONF_INCIDENT_ROADS):
+        entry_platforms = CAMERA_PLATFORMS + INCIDENT_PLATFORMS
+    else:
+        entry_platforms = CAMERA_PLATFORMS
     descargada = await hass.config_entries.async_unload_platforms(entry, entry_platforms)
 
     if descargada:

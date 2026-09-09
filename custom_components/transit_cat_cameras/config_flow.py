@@ -372,7 +372,12 @@ class TransitCatCamerasOptionsFlow(config_entries.OptionsFlow):
                 step_id="init", menu_options=["add_incident_panels"]
             )
         return self.async_show_menu(
-            step_id="init", menu_options=["add_cameras", "remove_cameras"]
+            step_id="init",
+            menu_options=[
+                "add_cameras",
+                "add_incident_panels",
+                "remove_cameras",
+            ],
         )
 
     async def async_step_add_incident_panels(
