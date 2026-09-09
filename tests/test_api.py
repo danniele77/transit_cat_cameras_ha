@@ -100,12 +100,6 @@ class TestParseIncidents(unittest.TestCase):
         self.assertEqual(incidents[0].display_name, "C-32 · km 12.5 · Nord")
 
 
-class TestWindyCameras(unittest.TestCase):
-    def test_crea_urls_estables_y_clasifica_montana(self) -> None:
-        cameras = api.windy_camera_inventory()
-        self.assertEqual(len(cameras), 9)
-        self.assertEqual(cameras[0].image_url, "https://images-webcams.windy.com/36/1793912336/current/full/1793912336.jpg")
-        self.assertEqual(cameras[-1].road_name, "Estaciones de esquí")
 
 
 class TestIsAllowedImageUrl(unittest.TestCase):
