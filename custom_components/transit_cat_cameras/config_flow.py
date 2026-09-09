@@ -41,7 +41,6 @@ from .api import (
     async_fetch_rasos_camera_inventory,
     async_fetch_threecat_camera_inventory,
     rasos_camera,
-    windy_camera_inventory,
 )
 from .const import (
     CONF_CAMERAS,
@@ -96,7 +95,6 @@ async def _get_inventory_or_error(hass) -> tuple[list[TransitCatCamera] | None, 
         # Rasos es una cámara conocida: se añade siempre, aunque su página
         # WordPress esté caída o cambie su HTML.
         cameras.append(rasos_camera())
-        cameras.extend(windy_camera_inventory())
     except TimeoutError:
         return None, "timeout"
     except InventoryTooLargeError:
@@ -118,8 +116,6 @@ def _camera_source(camera: TransitCatCamera) -> str:
         return "ski"
     if camera.source == "3Cat":
         return "webcams"
-    if camera.source == "Windy":
-        return "windy"
     return "sct"
 
 
@@ -131,7 +127,6 @@ def _source_schema() -> vol.Schema:
                     options=[
                         SelectOptionDict(value="sct", label="SCT · Carreteras"),
                         SelectOptionDict(value="webcams", label="3Cat · Webcams"),
-                        SelectOptionDict(value="windy", label="Webcams Windy"),
                         SelectOptionDict(value="ski", label="Estaciones de esquí"),
                     ],
                     mode=SelectSelectorMode.DROPDOWN,

@@ -49,46 +49,6 @@ class InventoryTooLargeError(Exception):
     """El XML descargado supera el tamaño máximo permitido."""
 
 
-WINDY_WEBCAMS = (
-    (1793912336, "Castelldefels · Passeig Marítim"),
-    (1253451135, "Berga"),
-    (1213360923, "La Pobla de Lillet"),
-    (1444836676, "Ensija · Vallcebre"),
-    (1511378983, "Bagà · Niu de l'Àliga"),
-    (1260543690, "Saldes"),
-    (1512156298, "La Tosa · Alp"),
-    (1521534041, "Port del Comte"),
-    (1491809664, "La Molina"),
-)
-
-
-def windy_camera_inventory() -> list[TransitCatCamera]:
-    """Devuelve las webcams Windy enlazadas desde la página de Rasos."""
-    cameras: list[TransitCatCamera] = []
-    for webcam_id, name in WINDY_WEBCAMS:
-        bucket = str(webcam_id)[-2:]
-        image_url = (
-            f"https://images-webcams.windy.com/{bucket}/{webcam_id}/current/"
-            f"full/{webcam_id}.jpg"
-        )
-        category = "Estaciones de esquí" if name in {
-            "Ensija · Vallcebre", "La Tosa · Alp", "Port del Comte", "La Molina"
-        } else "Webcams Windy"
-        cameras.append(
-            TransitCatCamera(
-                device_id=f"windy_{webcam_id}",
-                source="Windy",
-                road_name=category,
-                municipality=name,
-                kilometer_point=None,
-                latitude=None,
-                longitude=None,
-                image_url=image_url,
-            )
-        )
-    return cameras
-
-
 class _ThreeCatCameraParser(HTMLParser):
     """Extrae las imágenes actuales del catálogo público de 3Cat."""
 

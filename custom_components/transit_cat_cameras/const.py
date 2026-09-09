@@ -66,7 +66,6 @@ ALLOWED_IMAGE_DOMAINS = (
     "mobilitat.ad",
     "statics.3cat.cat",
     "app.projecte4estacions.com",
-    "images-webcams.windy.com",
 )
 
 # Clave usada dentro de config_entry.data para guardar la lista de cámaras

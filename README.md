@@ -77,10 +77,6 @@ integración se elige **Incidencias viarias** y después las carreteras. Las
 cámaras se configuran en otra entrada eligiendo **Cámaras y webcams**. Esto
 evita mezclar entidades `camera` y `sensor` dentro del mismo dispositivo.
 
-También se incluyen las webcams públicas enlazadas desde Rasos de Peguera a
-través de Windy. En el selector aparecen como **Webcams Windy**; las cámaras
-de montaña se agrupan en **Estaciones de esquí**. Windy publica una imagen
-JPEG directa por cámara y la integración la descarga desde su servidor.
 
 ## Instalación
 

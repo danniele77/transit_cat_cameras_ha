@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 
 from homeassistant.config_entries import ConfigEntry
@@ -30,13 +30,17 @@ async def async_setup_entry(
     session = async_get_clientsession(hass)
     last_good_data: list[TransitCatIncident] = []
     last_error: str | None = None
+    last_success_at: str | None = None
+    last_attempt_at: str | None = None
 
     async def update_incidents() -> list[TransitCatIncident]:
-        nonlocal last_good_data, last_error
+        nonlocal last_good_data, last_error, last_success_at, last_attempt_at
+        last_attempt_at = datetime.now(timezone.utc).isoformat()
         try:
             data = await async_fetch_incidents(session)
             last_good_data = data
             last_error = None
+            last_success_at = last_attempt_at
             return data
         except Exception as err:  # noqa: BLE001 - conservar último dato válido
             last_error = str(err)
@@ -60,7 +64,14 @@ async def async_setup_entry(
     async_add_entities(
         [TransitCatIncidentSummarySensor(coordinator, entry)]
         + [
-            TransitCatRoadSensor(coordinator, entry, road, lambda: last_error)
+            TransitCatRoadSensor(
+                coordinator,
+                entry,
+                road,
+                lambda: last_error,
+                lambda: last_success_at,
+                lambda: last_attempt_at,
+            )
             for road in roads
         ]
     )
@@ -97,9 +108,19 @@ class _IncidentSensor(CoordinatorEntity, SensorEntity):
     def _details(incidents: list[TransitCatIncident]) -> list[dict[str, object]]:
         return [incident.as_dict() for incident in incidents]
 
+    @property
+    def available(self) -> bool:
+        return True
+
 
 class TransitCatIncidentSummarySensor(_IncidentSensor):
     _attr_name = "Incidencias viarias"
+
+    def __init__(self, coordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "summary")
+        self._source_url = (
+            "https://cit.transit.gencat.cat/cit/AppJava/views/incidents.xhtml"
+        )
 
     @property
     def native_value(self) -> int:
@@ -118,15 +139,26 @@ class TransitCatIncidentSummarySensor(_IncidentSensor):
         return {
             "carreteras": dict(sorted(by_road.items())),
             "incidencias_recientes": self._details(recent),
-            "fuente": "https://cit.transit.gencat.cat/cit/AppJava/views/incidents.xhtml",
+            "total": len(self._incidents),
+            "fuente": self._source_url,
         }
 
 
 class TransitCatRoadSensor(_IncidentSensor):
-    def __init__(self, coordinator, entry: ConfigEntry, road: str, error_getter) -> None:
+    def __init__(
+        self,
+        coordinator,
+        entry: ConfigEntry,
+        road: str,
+        error_getter,
+        success_getter,
+        attempt_getter,
+    ) -> None:
         super().__init__(coordinator, entry, road.lower().replace(" ", "_"))
         self._road = road
         self._error_getter = error_getter
+        self._success_getter = success_getter
+        self._attempt_getter = attempt_getter
         self._attr_name = f"Incidencias {road}"
 
     @property
@@ -143,5 +175,7 @@ class TransitCatRoadSensor(_IncidentSensor):
             "carretera": self._road,
             "incidencias": self._details(self._road_incidents),
             "error_actualizacion": self._error_getter(),
+            "ultima_actualizacion_correcta": self._success_getter(),
+            "ultimo_intento": self._attempt_getter(),
             "fuente": "https://cit.transit.gencat.cat/cit/AppJava/views/incidents.xhtml",
         }

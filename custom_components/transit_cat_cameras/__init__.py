@@ -44,7 +44,7 @@ INCIDENT_PLATFORMS = ["sensor"]
 
 def _camera_key(camera: dict) -> tuple[str, ...]:
     source = camera.get("source", "")
-    if source in ("3Cat", "Rasos de Peguera", "Windy"):
+    if source in ("3Cat", "Rasos de Peguera"):
         return (
             source,
             camera.get("road_name", ""),
